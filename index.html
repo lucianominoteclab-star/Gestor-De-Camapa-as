@@ -270,54 +270,69 @@ tr:hover td { background: var(--bg-secondary); }
       </div>
 
       <!-- DATOS -->
-      <div id="page-datos" class="page">
-        <div class="upload-grid">
-          <div class="card">
-            <div class="card-title">Base original</div>
-            <p style="font-size:12px; color:var(--text-tertiary); margin-bottom:0.875rem;">CSV con Nombre, Correo, Teléfono, Carrera. Sin columnas de OmniLeads.</p>
-            <div class="drop-zone" onclick="document.getElementById('file-base').click()">
-              <i class="ti ti-file-upload"></i>
-              <p>Hacé clic para subir tu CSV</p>
-              <input type="file" id="file-base" accept=".csv" onchange="handleBase(this)">
-            </div>
-            <div id="base-pill" style="display:none" class="file-pill">
-              <i class="ti ti-circle-check"></i>
-              <span class="fname" id="base-fname">—</span>
-              <small id="base-rows">—</small>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">Resultados OmniLeads</div>
-            <p style="font-size:12px; color:var(--text-tertiary); margin-bottom:0.875rem;">Exportá el CSV del CRM. Se mergea por número de teléfono sobre la base activa en Drive.</p>
-            <div class="drop-zone" onclick="document.getElementById('file-results').click()">
-              <i class="ti ti-file-import"></i>
-              <p>Subí el CSV de resultados</p>
-              <input type="file" id="file-results" accept=".csv" onchange="handleResults(this)">
-            </div>
-            <div id="results-pill" style="display:none" class="file-pill">
-              <i class="ti ti-circle-check"></i>
-              <span class="fname" id="results-fname">—</span>
-              <small id="results-rows">—</small>
-            </div>
-          </div>
-        </div>
-
-        <div id="merge-info" style="display:none" class="card" style="margin-bottom:1rem;">
-          <div class="card-title">Resultado del merge</div>
-          <div id="merge-detail"></div>
-        </div>
-
-        <div id="preview-wrap" style="display:none">
-          <div class="table-wrap">
-            <div class="table-header">
-              <h3>Vista previa (5 registros)</h3>
-              <span id="preview-badge" class="badge badge-gray">—</span>
-            </div>
-            <table id="preview-table"></table>
-          </div>
-        </div>
+     <div id="page-datos" class="page">
+  <div class="upload-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="card">
+      <div class="card-title">1. Base original</div>
+      <p style="font-size:12px; color:var(--text-tertiary); margin-bottom:0.875rem;">Subí tu CSV inicial con los datos de los alumnos.</p>
+      <div class="drop-zone" onclick="document.getElementById('file-base').click()">
+        <i class="ti ti-file-upload"></i>
+        <p>Subir CSV Base</p>
+        <input type="file" id="file-base" accept=".csv" onchange="handleBase(this)">
       </div>
+      <div id="base-pill" style="display:none" class="file-pill">
+        <i class="ti ti-circle-check"></i>
+        <span class="fname" id="base-fname">—</span>
+        <small id="base-rows">—</small>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">2. Resultados OmniLeads</div>
+      <p style="font-size:12px; color:var(--text-tertiary); margin-bottom:0.875rem;">Subí el CSV general con llamadas e intentos de OmniLeads.</p>
+      <div class="drop-zone" onclick="document.getElementById('file-results').click()">
+        <i class="ti ti-file-import"></i>
+        <p>Subir CSV Discador</p>
+        <input type="file" id="file-results" accept=".csv" onchange="handleResults(this)">
+      </div>
+      <div id="results-pill" style="display:none" class="file-pill">
+        <i class="ti ti-circle-check"></i>
+        <span class="fname" id="results-fname">—</span>
+        <small id="results-rows">—</small>
+      </div>
+    </div>
 
+    <div class="card">
+      <div class="card-title">3. Base de Descartes</div>
+      <p style="font-size:12px; color:var(--text-tertiary); margin-bottom:0.875rem;">Subí el CSV de descartes para cruzar el motivo específico.</p>
+      <div class="drop-zone" onclick="document.getElementById('file-descartes').click()">
+        <i class="ti ti-barrier-block"></i>
+        <p>Subir CSV Descartes</p>
+        <input type="file" id="file-descartes" accept=".csv" onchange="handleDescartes(this)">
+      </div>
+      <div id="descartes-pill" style="display:none" class="file-pill">
+        <i class="ti ti-circle-check"></i>
+        <span class="fname" id="descartes-fname">—</span>
+        <small id="descartes-rows">—</small>
+      </div>
+    </div>
+  </div>
+
+  <div id="merge-info" style="display:none" class="card" style="margin-bottom:1rem;">
+    <div class="card-title">Resultado del acoplamiento</div>
+    <div id="merge-detail"></div>
+  </div>
+
+  <div id="preview-wrap" style="display:none; margin-top: 15px;">
+    <div class="table-wrap">
+      <div class="table-header">
+        <h3>Vista previa en tiempo real (Primeros registros unificados)</h3>
+        <span id="preview-badge" class="badge badge-gray">—</span>
+      </div>
+      <table id="preview-table"></table>
+    </div>
+  </div>
+</div>
       <!-- CAMPAÑA -->
       <div id="page-campana" class="page">
         <div class="filter-card">
@@ -586,7 +601,74 @@ function handleResults(input) {
   };
   reader.readAsText(file);
 }
+// Agregar esta función al bloque de funciones de JavaScript en tu index.html
+function handleDescartes(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const rows = parseCSV(e.target.result);
+    if (!rows.length) { toast("CSV de descartes vacío o inválido", "error"); return; }
+    
+    document.getElementById("descartes-pill").style.display = "flex";
+    document.getElementById("descartes-fname").textContent = file.name;
+    document.getElementById("descartes-rows").textContent = rows.length + " descartes";
 
+    if (!localData.length) { toast("Cargá primero la base original para poder cruzar los datos", "error"); return; }
+
+    // Cruce en caliente en la memoria local (Navegador)
+    const filePhoneKey = getFlexibleKey(rows[0], "Telefono");
+    const fileDescKey  = getFlexibleKey(rows[0], "Descarte");
+    
+    const basePhoneKey = getFlexibleKey(localData[0], "numero_de_telefono");
+    const baseDescKey  = getFlexibleKey(localData[0], "Motivos de Descarte");
+
+    const descarteMap = {};
+    rows.forEach(r => { const p = normalizePhone(r[filePhoneKey]); if (p) descarteMap[p] = r[fileDescKey]; });
+
+    let matched = 0;
+    localData = localData.map(row => {
+      const motivo = descarteMap[normalizePhone(row[basePhoneKey])];
+      if (motivo) {
+        matched++;
+        row[baseDescKey] = motivo;
+      }
+      return row;
+    });
+
+    toast("Cruzando motivos de descarte con la Sheet de Drive…");
+    if (scriptUrl) {
+      const res = await apiPost({ action: "mergeDescartes", rows });
+      if (res.ok) {
+        toast(`Descartes unificados: ${res.matched} leads actualizados ✓`, "success");
+        refreshData(); // Actualiza dashboard y tablas
+      } else {
+        toast("Error en el proceso de Drive: " + res.error, "error");
+      }
+    }
+  };
+  reader.readAsText(file);
+}
+
+// Modificar la función renderPreview original para que incluya la columna de Descarte al final:
+function renderPreview(data) {
+  if (!data || !data.length) return;
+  const sample = data[0];
+  const pk = getFlexibleKey(sample, "numero_de_telefono");
+  const cak = getFlexibleKey(sample, "Calificación");
+  const cok = getFlexibleKey(sample, "Contactación");
+  const ink = getFlexibleKey(sample, "Intentos");
+  const nmk = getFlexibleKey(sample, "Nombre");
+  const dsk = getFlexibleKey(sample, "Motivos de Descarte");
+
+  const previewRows = data.slice(0, 5);
+  document.getElementById("preview-badge").textContent = data.length + " registros totales";
+  
+  document.getElementById("preview-table").innerHTML =
+    `<thead><tr><th>Nombre</th><th>Teléfono</th><th>Calificación</th><th>Contactación</th><th>Intentos</th><th>Motivo Descarte</th></tr></thead><tbody>` +
+    previewRows.map(r=>`<tr><td>${r[nmk]||"—"}</td><td>${r[pk]||"—"}</td><td>${r[cak]||"—"}</td><td>${r[cok]||"—"}</td><td>${r[ink]||"0"}</td><td><span style="color:var(--red-text); font-weight:500;">${r[dsk]||"—"}</span></td></tr>`).join("") +
+    `</tbody>`;
+}
 // ── Preview ───────────────────────────────────────────────────
 function renderPreview(data) {
   const preview = (data||localData).slice(0, 5);
