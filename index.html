@@ -470,12 +470,18 @@ function setConnStatus(state) {
 // ── API helpers ───────────────────────────────────────────────
 async function apiFetch(action) {
   const url = scriptUrl + "?action=" + action + "&t=" + Date.now();
-  const res = await fetch(url);
+  const res = await fetch(url, { redirect: "follow" });
   return res.json();
 }
 
 async function apiPost(body) {
-  const res = await fetch(scriptUrl, { method:"POST", body: JSON.stringify(body) });
+  // Apps Script requiere form-urlencoded para aceptar POST cross-origin
+  const res = await fetch(scriptUrl, {
+    method: "POST",
+    redirect: "follow",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(body)
+  });
   return res.json();
 }
 
