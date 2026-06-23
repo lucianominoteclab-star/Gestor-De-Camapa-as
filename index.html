@@ -543,25 +543,26 @@ function handleBase(input) {
   const reader = new FileReader();
   reader.onload = async e => {
     const rows = parseCSV(e.target.result);
-    if (!rows.length) { toast("CSV vacío o inválido", "error"); return; }
+    if (!rows.length) { toast("CSV vacío", "error"); return; }
+    
+    // !!! ESTA LÍNEA ES CLAVE !!!
+    localData = rows; 
+    
     document.getElementById("base-pill").style.display = "flex";
     document.getElementById("base-fname").textContent = file.name;
-    document.getElementById("base-rows").textContent = rows.length + " registros";
-    localData = rows;
-    updateCarreraFilter();
-    renderPreview(rows);
-    document.getElementById("preview-wrap").style.display = "block";
-    document.getElementById("db-info").textContent = rows.length + " leads (local)";
+    document.getElementById("base-rows").textContent = rows.length + " filas";
+    
+    // Pintamos la vista previa al instante
+    renderPreview(localData);
+
+    toast("Subiendo base original a Drive…");
     if (scriptUrl) {
-      toast("Subiendo a Google Drive…");
-      const res = await apiPost({ action:"uploadBase", rows });
-      if (res.ok) toast(`Base de ${res.uploaded} leads guardada en Drive ✓`, "success");
-      else toast("Error al guardar: " + res.error, "error");
+      const res = await apiPost({ action: "uploadBase", rows });
+      if (res.ok) toast("Base guardada en Google Sheets ✓", "success");
     }
   };
   reader.readAsText(file);
 }
-
 // ── Merge resultados ──────────────────────────────────────────
 function handleResults(input) {
   const file = input.files[0];
@@ -688,22 +689,24 @@ function handleDescartes(input) {
 // Modificar la función renderPreview original para que incluya la columna de Descarte al final:
 function renderPreview(data) {
   if (!data || !data.length) return;
-  const sample = data[0];
-  const keys = Object.keys(sample);
-
-  // Encontramos las columnas reales basándonos en lo que contenga el archivo mapeado
-  const nmk = keys.find(k => k.toLowerCase().trim() === "nombre") || keys[0];
-  const pk  = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || keys[2];
-  const cak = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "") === "calificacion") || "Calificación";
-  const cok = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "") === "contactacion") || "Contactación";
-  const ink = keys.find(k => k.toLowerCase().trim() === "intentos") || "Intentos";
   
-  // Clave exacta que usamos para inyectar los descartes
-  const dsk = "Motivos de Descarte";
-
   const previewRows = data.slice(0, 5);
   document.getElementById("preview-badge").textContent = data.length + " registros totales";
   
+  // 1. Detectamos dinámicamente qué columnas de identidad existen en el archivo real
+  const firstRow = data[0];
+  const keys = Object.keys(firstRow);
+  
+  const nmk = keys.find(k => k.toLowerCase().trim() === "nombre") || keys[0];
+  const pk  = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || keys[2];
+
+  // 2. Para las columnas operativas, buscamos variaciones o dejamos el nombre estándar
+  const cak = keys.find(k => k.toLowerCase().includes("calificac")) || "Calificación";
+  const cok = keys.find(k => k.toLowerCase().includes("contactac")) || "Contactación";
+  const ink = keys.find(k => k.toLowerCase().includes("intento"))   || "Intentos";
+  const dsk = keys.find(k => k.toLowerCase().includes("descarte"))   || "Motivos de Descarte";
+
+  // 3. Renderizamos la tabla de forma segura
   document.getElementById("preview-table").innerHTML =
     `<thead>
       <tr>
@@ -717,13 +720,13 @@ function renderPreview(data) {
     </thead>
     <tbody>` +
     previewRows.map(r => {
-      // Extraemos el valor usando la clave real detectada
-      const nombre = r[nmk] || "—";
-      const telefono = r[pk] || "—";
-      const calif = r[cak] || "—";
-      const contac = r[cok] || "—";
+      // Extraemos el valor si la llave existe; de lo contrario ponemos "—"
+      const nombre   = r[nmk] !== undefined ? r[nmk] : "—";
+      const telefono = r[pk]  !== undefined ? r[pk]  : "—";
+      const calif    = r[cak] !== undefined ? r[cak] : "—";
+      const contac   = r[cok] !== undefined ? r[cok] : "—";
       const intentos = r[ink] !== undefined && r[ink] !== "" ? r[ink] : "0";
-      const descarte = r[dsk] || "—";
+      const descarte = r[dsk] !== undefined ? r[dsk] : "—";
       
       return `<tr>
         <td>${nombre}</td>
