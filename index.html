@@ -706,11 +706,53 @@ function renderPreview(data) {
 }
 // ── Preview ───────────────────────────────────────────────────
 function renderPreview(data) {
-  const preview = (data||localData).slice(0, 5);
-  document.getElementById("preview-badge").textContent = localData.length + " registros totales";
+  if (!data || !data.length) return;
+  const sample = data[0];
+  
+  // --- DETECCIÓN INTELIGENTE DE COLUMNAS PARA LA VISTA PREVIA ---
+  const keys = Object.keys(sample);
+  
+  const nmk = keys.find(k => k.toLowerCase().trim() === "nombre") || keys[0];
+  // Detecta "numero de telefono", "numero_de_telefono" o "telefono"
+  const pk  = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || keys[2];
+  const cak = keys.find(k => k.toLowerCase().trim() === "calificación" || k.toLowerCase().trim() === "calificacion") || "Calificación";
+  const cok = keys.find(k => k.toLowerCase().trim() === "contactación" || k.toLowerCase().trim() === "contactacion") || "Contactación";
+  const ink = keys.find(k => k.toLowerCase().trim() === "intentos") || "Intentos";
+  const dsk = "Motivos de Descarte"; // Columna unificada que inyectamos nosotros
+
+  const previewRows = data.slice(0, 5);
+  document.getElementById("preview-badge").textContent = data.length + " registros totales";
+  
   document.getElementById("preview-table").innerHTML =
-    `<thead><tr>${COLS_PREVIEW.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>` +
-    preview.map(r=>`<tr>${COLS_PREVIEW.map(c=>`<td>${r[c]||"—"}</td>`).join("")}</tr>`).join("") +
+    `<thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Teléfono</th>
+        <th>Calificación</th>
+        <th>Contactación</th>
+        <th>Intentos</th>
+        <th>Motivo Descarte</th>
+      </tr>
+    </thead>
+    <tbody>` +
+    previewRows.map(r => {
+      // Limpiamos los valores por si vienen undefined u objetos vacíos
+      const nombre = r[nmk] || "—";
+      const telefono = r[pk] || "—";
+      const calif = r[cak] || "—";
+      const contac = r[cok] || "—";
+      const intentos = r[ink] !== undefined && r[ink] !== "" ? r[ink] : "0";
+      const descarte = r[dsk] || "—";
+      
+      return `<tr>
+        <td>${nombre}</td>
+        <td>${telefono}</td>
+        <td>${calif}</td>
+        <td>${contac}</td>
+        <td>${intentos}</td>
+        <td><span style="color:var(--red-text); font-weight:600;">${descarte}</span></td>
+      </tr>`;
+    }).join("") +
     `</tbody>`;
 }
 
