@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campaign Manager · Discador</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f5f5f3;
+  --bg-surface: #ffffff;
+  --bg-secondary: #f0efed;
+  --text: #1a1a19;
+  --text-secondary: #5a5a58;
+  --text-tertiary: #9a9a97;
+  --border: rgba(0,0,0,0.10);
+  --border-md: rgba(0,0,0,0.18);
+  --green: #1D9E75;
+  --green-bg: #E1F5EE;
+  --green-text: #0F6E56;
+  --amber: #BA7517;
+  --amber-bg: #FAEEDA;
+  --amber-text: #854F0B;
+  --red: #A32D2D;
+  --red-bg: #FCEBEB;
+  --red-text: #A32D2D;
+  --blue-bg: #E6F1FB;
+  --blue-text: #185FA5;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1a;
+    --bg-surface: #242422;
+    --bg-secondary: #2e2e2b;
+    --text: #e8e8e4;
+    --text-secondary: #a8a8a4;
+    --text-tertiary: #68685f;
+    --border: rgba(255,255,255,0.08);
+    --border-md: rgba(255,255,255,0.15);
+    --green-bg: #04342C;
+    --green-text: #9FE1CB;
+    --amber-bg: #412402;
+    --amber-text: #FAC775;
+    --red-bg: #501313;
+    --red-text: #F7C1C1;
+    --blue-bg: #042C53;
+    --blue-text: #B5D4F4;
+  }
+}
+
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); font-size: 14px; height: 100vh; overflow: hidden; }
+.app { display: flex; height: 100vh; }
+
+/* Sidebar */
+.sidebar { width: 210px; min-width: 210px; background: var(--bg-surface); border-right: 0.5px solid var(--border); display: flex; flex-direction: column; }
+.sidebar-header { padding: 1.25rem 1rem 1rem; border-bottom: 0.5px solid var(--border); }
+.sidebar-header h1 { font-size: 14px; font-weight: 500; }
+.sidebar-header p { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+.sidebar-header .conn-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #ccc; margin-right: 4px; vertical-align: middle; }
+.sidebar-header .conn-dot.connected { background: var(--green); }
+nav { padding: 0.5rem 0; flex: 1; }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 9px 1rem; font-size: 13px; color: var(--text-secondary); cursor: pointer; transition: background 0.1s; border-left: 2px solid transparent; }
+.nav-item:hover { background: var(--bg-secondary); color: var(--text); }
+.nav-item.active { background: var(--bg-secondary); color: var(--text); font-weight: 500; border-left-color: var(--green); }
+.nav-item i { font-size: 17px; }
+.sidebar-footer { padding: 1rem; border-top: 0.5px solid var(--border); }
+.sidebar-footer p { font-size: 11px; color: var(--text-tertiary); }
+#script-url-input { width: 100%; font-size: 11px; padding: 5px 7px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--bg-secondary); color: var(--text); margin-top: 4px; }
+
+/* Main */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { background: var(--bg-surface); border-bottom: 0.5px solid var(--border); padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.topbar h2 { font-size: 15px; font-weight: 500; }
+.topbar-meta { font-size: 12px; color: var(--text-tertiary); display: flex; align-items: center; gap: 12px; }
+.content { flex: 1; overflow-y: auto; padding: 1.25rem 1.5rem; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* Botones */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px; border: 0.5px solid var(--border-md); border-radius: var(--radius); cursor: pointer; background: var(--bg-surface); color: var(--text); font-family: inherit; transition: background 0.12s; }
+.btn:hover { background: var(--bg-secondary); }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--green); color: white; border-color: var(--green); }
+.btn-primary:hover { background: var(--green-text); border-color: var(--green-text); }
+.btn i { font-size: 15px; }
+.btn-sm { padding: 4px 9px; font-size: 12px; }
+
+/* Métricas */
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+.metric-card { background: var(--bg-secondary); border-radius: var(--radius); padding: 0.875rem 1rem; }
+.metric-label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+.metric-value { font-size: 26px; font-weight: 500; line-height: 1; }
+.metric-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+.c-green { color: var(--green); }
+.c-amber { color: var(--amber); }
+.c-red { color: var(--red); }
+
+/* Charts */
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.card { background: var(--bg-surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+.card-title { font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.875rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.bar-label { font-size: 12px; color: var(--text-secondary); width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.bar-track { flex: 1; background: var(--bg-secondary); border-radius: 3px; height: 5px; }
+.bar-fill { height: 5px; border-radius: 3px; transition: width 0.4s ease; }
+.bar-count { font-size: 11px; color: var(--text-tertiary); min-width: 28px; text-align: right; }
+.fill-green  { background: #1D9E75; }
+.fill-amber  { background: #EF9F27; }
+.fill-red    { background: #E24B4A; }
+.fill-blue   { background: #378ADD; }
+.fill-purple { background: #7F77DD; }
+.fill-gray   { background: #888780; }
+.fill-teal   { background: #5DCAA5; }
+
+/* Upload */
+.upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.drop-zone { border: 1px dashed var(--border-md); border-radius: var(--radius); padding: 1.5rem 1rem; text-align: center; cursor: pointer; transition: background 0.12s; }
+.drop-zone:hover { background: var(--bg-secondary); }
+.drop-zone i { font-size: 26px; color: var(--text-tertiary); display: block; margin-bottom: 6px; }
+.drop-zone p { font-size: 12px; color: var(--text-secondary); }
+.drop-zone input[type=file] { display: none; }
+.file-pill { display: flex; align-items: center; gap: 7px; background: var(--bg-secondary); border-radius: var(--radius); padding: 8px 10px; margin-top: 8px; font-size: 12px; }
+.file-pill i { font-size: 15px; color: var(--green); }
+.file-pill .fname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-pill small { color: var(--text-tertiary); font-size: 11px; white-space: nowrap; }
+
+/* Toast */
+.toast-wrap { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; flex-direction: column; gap: 8px; z-index: 999; pointer-events: none; }
+.toast { background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: var(--radius); font-size: 13px; display: flex; align-items: center; gap: 8px; max-width: 320px; animation: slideIn 0.2s ease; }
+.toast.error { background: var(--red); color: white; }
+.toast.success { background: var(--green); color: white; }
+@keyframes slideIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+
+/* Badges */
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 99px; font-size: 11px; white-space: nowrap; }
+.badge-green  { background: var(--green-bg);  color: var(--green-text); }
+.badge-amber  { background: var(--amber-bg);  color: var(--amber-text); }
+.badge-red    { background: var(--red-bg);    color: var(--red-text); }
+.badge-blue   { background: var(--blue-bg);   color: var(--blue-text); }
+.badge-gray   { background: var(--bg-secondary); color: var(--text-secondary); }
+
+/* Tabla */
+.table-wrap { background: var(--bg-surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.table-header { padding: 0.75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid var(--border); }
+.table-header h3 { font-size: 13px; font-weight: 500; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { padding: 7px 1rem; text-align: left; font-size: 11px; font-weight: 500; color: var(--text-tertiary); background: var(--bg-secondary); border-bottom: 0.5px solid var(--border); white-space: nowrap; }
+td { padding: 7px 1rem; border-bottom: 0.5px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg-secondary); }
+
+/* Filtros campaña */
+.filter-card { background: var(--bg-surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+.filter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.875rem; }
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+.filter-group select, .filter-group input[type=text] { font-size: 13px; padding: 6px 8px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--bg-secondary); color: var(--text); font-family: inherit; }
+.filter-divider { height: 0.5px; background: var(--border); margin: 1rem 0; }
+.filter-actions { display: flex; align-items: center; justify-content: space-between; }
+
+/* Empty state */
+.empty { text-align: center; padding: 3rem 1rem; color: var(--text-tertiary); }
+.empty i { font-size: 32px; display: block; margin-bottom: 8px; }
+.empty p { font-size: 13px; }
+
+/* Historial */
+.history-item { background: var(--bg-surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 0.875rem 1.25rem; display: flex; align-items: center; gap: 1rem; margin-bottom: 8px; }
+.history-icon { width: 34px; height: 34px; border-radius: var(--radius); background: var(--green-bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.history-icon i { font-size: 17px; color: var(--green-text); }
+.history-info { flex: 1; min-width: 0; }
+.history-info h4 { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.history-info p { font-size: 12px; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+
+/* Loader */
+.loader { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border-md); border-top-color: var(--green); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h1>Campaign Manager</h1>
+      <p style="margin-top:6px;">
+        <span class="conn-dot" id="conn-dot"></span>
+        <span id="conn-label">Sin conectar</span>
+      </p>
+    </div>
+    <nav>
+      <div class="nav-item active" data-page="dashboard">
+        <i class="ti ti-chart-bar"></i> Dashboard
+      </div>
+      <div class="nav-item" data-page="datos">
+        <i class="ti ti-upload"></i> Cargar datos
+      </div>
+      <div class="nav-item" data-page="campana">
+        <i class="ti ti-filter"></i> Armar campaña
+      </div>
+      <div class="nav-item" data-page="historial">
+        <i class="ti ti-clock"></i> Historial
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <p>URL del Apps Script</p>
+      <input type="text" id="script-url-input" placeholder="Pegá tu Web App URL acá" oninput="saveScriptUrl(this.value)">
+      <button class="btn btn-sm" style="margin-top:6px; width:100%;" onclick="testConnection()">
+        <i class="ti ti-plug"></i> Conectar
+      </button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <h2 id="page-title">Dashboard</h2>
+      <div class="topbar-meta">
+        <span id="db-info">Sin base cargada</span>
+        <button class="btn btn-sm" onclick="refreshData()" title="Actualizar desde Drive">
+          <i class="ti ti-refresh"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="page active">
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="metric-label">Total leads</div>
+            <div class="metric-value" id="m-total">—</div>
+            <div class="metric-sub">en base activa</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Contactados</div>
+            <div class="metric-value c-green" id="m-contactados">—</div>
+            <div class="metric-sub" id="m-contactados-pct">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Calificados</div>
+            <div class="metric-value c-amber" id="m-calificados">—</div>
+            <div class="metric-sub" id="m-calificados-pct">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Sin trabajar</div>
+            <div class="metric-value c-red" id="m-sintrabajar">—</div>
+            <div class="metric-sub">0 intentos</div>
+          </div>
+        </div>
+        <div class="charts-row">
+          <div class="card">
+            <div class="card-title">Contactación</div>
+            <div id="chart-contactacion"><div class="empty"><i class="ti ti-phone-off"></i><p>Cargá datos</p></div></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Calificación</div>
+            <div id="chart-calificacion"><div class="empty"><i class="ti ti-tag"></i><p>Cargá datos</p></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Leads por carrera</div>
+          <div id="chart-carreras"><div class="empty"><i class="ti ti-school"></i><p>Cargá datos</p></div></div>
+        </div>
+      </div>
+
+      <!-- DATOS -->
+      <div id="page-datos" class="page">
+        <div class="upload-grid">
+          <div class="card">
+            <div class="card-title">Base original</div>
+            <p style="font-size:12px; color:var(--text-tertiary); margin-bottom:0.875rem;">CSV con Nombre, Correo, Teléfono, Carrera. Sin columnas de OmniLeads.</p>
+            <div class="drop-zone" onclick="document.getElementById('file-base').click()">
+              <i class="ti ti-file-upload"></i>
+              <p>Hacé clic para subir tu CSV</p>
+              <input type="file" id="file-base" accept=".csv" onchange="handleBase(this)">
+            </div>
+            <div id="base-pill" style="display:none" class="file-pill">
+              <i class="ti ti-circle-check"></i>
+              <span class="fname" id="base-fname">—</span>
+              <small id="base-rows">—</small>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Resultados OmniLeads</div>
+            <p style="font-size:12px; color:var(--text-tertiary); margin-bottom:0.875rem;">Exportá el CSV del CRM. Se mergea por número de teléfono sobre la base activa en Drive.</p>
+            <div class="drop-zone" onclick="document.getElementById('file-results').click()">
+              <i class="ti ti-file-import"></i>
+              <p>Subí el CSV de resultados</p>
+              <input type="file" id="file-results" accept=".csv" onchange="handleResults(this)">
+            </div>
+            <div id="results-pill" style="display:none" class="file-pill">
+              <i class="ti ti-circle-check"></i>
+              <span class="fname" id="results-fname">—</span>
+              <small id="results-rows">—</small>
+            </div>
+          </div>
+        </div>
+
+        <div id="merge-info" style="display:none" class="card" style="margin-bottom:1rem;">
+          <div class="card-title">Resultado del merge</div>
+          <div id="merge-detail"></div>
+        </div>
+
+        <div id="preview-wrap" style="display:none">
+          <div class="table-wrap">
+            <div class="table-header">
+              <h3>Vista previa (5 registros)</h3>
+              <span id="preview-badge" class="badge badge-gray">—</span>
+            </div>
+            <table id="preview-table"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CAMPAÑA -->
+      <div id="page-campana" class="page">
+        <div class="filter-card">
+          <div class="filter-grid">
+            <div class="filter-group">
+              <label>Carrera</label>
+              <select id="f-carrera" onchange="applyFilters()">
+                <option value="">Todas las carreras</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Calificación</label>
+              <select id="f-calificacion" onchange="applyFilters()">
+                <option value="">Cualquier calificación</option>
+                <option value="__vacio__">Sin calificación</option>
+                <option value="DESCARTE">DESCARTE</option>
+                <option value="BUZON">BUZON</option>
+                <option value="AGENDADO PARA SEGUIMIENTO">AGENDADO PARA SEGUIMIENTO</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Contactación</label>
+              <select id="f-contactacion" onchange="applyFilters()">
+                <option value="">Cualquier contactación</option>
+                <option value="__vacio__">Sin contactación</option>
+                <option value="Contactado">Contactado</option>
+                <option value="Contestador">Contestador</option>
+                <option value="Cliente no atiende">Cliente no atiende</option>
+                <option value="Abandonada por cliente">Abandonada por cliente</option>
+                <option value="Canales Saturados">Canales Saturados</option>
+                <option value="Ocupado">Ocupado</option>
+                <option value="Expirada">Expirada</option>
+                <option value="Canal congestionado">Canal congestionado</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-divider"></div>
+          <div class="filter-grid">
+            <div class="filter-group">
+              <label>Intentos (máximo)</label>
+              <select id="f-intentos" onchange="applyFilters()">
+                <option value="">Cualquiera</option>
+                <option value="0">0 — sin trabajar</option>
+                <option value="1">Hasta 1 intento</option>
+                <option value="2">Hasta 2 intentos</option>
+                <option value="3">Hasta 3 intentos</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Nombre de la campaña</label>
+              <input type="text" id="campaign-name" placeholder="Ej: LEADS PROG JUNIO 01">
+            </div>
+            <div class="filter-group" style="justify-content:flex-end;">
+              <button class="btn btn-primary" onclick="exportCampaign()">
+                <i class="ti ti-download"></i> Exportar CSV
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <h3>Leads filtrados</h3>
+            <span id="filtered-badge" class="badge badge-green">0 leads</span>
+          </div>
+          <div id="campaign-table">
+            <div class="empty"><i class="ti ti-filter"></i><p>Cargá una base y aplicá filtros</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORIAL -->
+      <div id="page-historial" class="page">
+        <div id="history-list">
+          <div class="empty"><i class="ti ti-clock"></i><p>Las campañas exportadas aparecerán acá</p></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+const PHONE_COL = "numero_de_telefono";
+const COLS_EXPORT = ["Nombre","Correo","numero_de_telefono","Numero_de_telefono_de_WhatsApp","Carrera"];
+const COLS_PREVIEW = ["Nombre","Carrera","numero_de_telefono","Calificación","Contactación","Intentos"];
+let localData = [];
+let scriptUrl = localStorage.getItem("cm_script_url") || "";
+let campaignHistory = JSON.parse(localStorage.getItem("cm_history") || "[]");
+
+// ── Init ──────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  if (scriptUrl) document.getElementById("script-url-input").value = scriptUrl;
+  renderHistory();
+  document.querySelectorAll(".nav-item").forEach(el => {
+    el.addEventListener("click", () => showPage(el.dataset.page));
+  });
+  if (scriptUrl) testConnection();
+});
+
+// ── Nav ───────────────────────────────────────────────────────
+function showPage(page) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("page-" + page).classList.add("active");
+  document.querySelector(`[data-page="${page}"]`).classList.add("active");
+  const titles = { dashboard:"Dashboard", datos:"Cargar datos", campana:"Armar campaña", historial:"Historial" };
+  document.getElementById("page-title").textContent = titles[page];
+  if (page === "campana" && localData.length) applyFilters();
+}
+
+// ── Script URL / conexión ─────────────────────────────────────
+function saveScriptUrl(val) {
+  scriptUrl = val.trim();
+  localStorage.setItem("cm_script_url", scriptUrl);
+}
+
+async function testConnection() {
+  if (!scriptUrl) { toast("Pegá la URL del Apps Script primero", "error"); return; }
+  setConnStatus("connecting");
+  try {
+    const res = await apiFetch("ping");
+    if (res.ok) {
+      setConnStatus("connected");
+      toast("Conectado a Google Drive ✓", "success");
+      refreshData();
+    } else {
+      setConnStatus("error");
+      toast("Error al conectar: " + (res.error || "respuesta inesperada"), "error");
+    }
+  } catch(e) {
+    setConnStatus("error");
+    toast("No se pudo conectar. Revisá la URL.", "error");
+  }
+}
+
+function setConnStatus(state) {
+  const dot = document.getElementById("conn-dot");
+  const lbl = document.getElementById("conn-label");
+  const map = { connecting:["#EF9F27","Conectando…"], connected:["#1D9E75","Conectado"], error:["#E24B4A","Error"], default:["#ccc","Sin conectar"] };
+  const [color, text] = map[state] || map.default;
+  dot.style.background = color;
+  lbl.textContent = text;
+  dot.classList.toggle("connected", state === "connected");
+}
+
+// ── API helpers ───────────────────────────────────────────────
+async function apiFetch(action) {
+  const url = scriptUrl + "?action=" + action + "&t=" + Date.now();
+  const res = await fetch(url);
+  return res.json();
+}
+
+async function apiPost(body) {
+  const res = await fetch(scriptUrl, { method:"POST", body: JSON.stringify(body) });
+  return res.json();
+}
+
+// ── Refresh desde Drive ───────────────────────────────────────
+async function refreshData() {
+  if (!scriptUrl) return;
+  try {
+    const res = await apiFetch("getStats");
+    if (res.error) { toast(res.error, "error"); return; }
+    updateDashboard(res);
+    document.getElementById("db-info").textContent = res.total + " leads en Drive";
+    const baseRes = await apiFetch("getBase");
+    if (baseRes.rows) {
+      localData = baseRes.rows;
+      updateCarreraFilter();
+    }
+  } catch(e) {
+    toast("Error al leer datos de Drive", "error");
+  }
+}
+
+// ── CSV parser ────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const sep = lines[0].includes(";") ? ";" : ",";
+  const headers = lines[0].split(sep).map(h => h.trim().replace(/^"|"$/g,""));
+  return lines.slice(1).map(line => {
+    const vals = line.split(sep).map(v => v.trim().replace(/^"|"$/g,""));
+    const obj = {};
+    headers.forEach((h,i) => obj[h] = vals[i] || "");
+    return obj;
+  });
+}
+
+function normalizePhone(p) {
+  return String(p||"").replace(/\D/g,"").slice(-10);
+}
+
+// ── Subir base original ───────────────────────────────────────
+function handleBase(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const rows = parseCSV(e.target.result);
+    if (!rows.length) { toast("CSV vacío o inválido", "error"); return; }
+    document.getElementById("base-pill").style.display = "flex";
+    document.getElementById("base-fname").textContent = file.name;
+    document.getElementById("base-rows").textContent = rows.length + " registros";
+    localData = rows;
+    updateCarreraFilter();
+    renderPreview(rows);
+    document.getElementById("preview-wrap").style.display = "block";
+    document.getElementById("db-info").textContent = rows.length + " leads (local)";
+    if (scriptUrl) {
+      toast("Subiendo a Google Drive…");
+      const res = await apiPost({ action:"uploadBase", rows });
+      if (res.ok) toast(`Base de ${res.uploaded} leads guardada en Drive ✓`, "success");
+      else toast("Error al guardar: " + res.error, "error");
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ── Merge resultados ──────────────────────────────────────────
+function handleResults(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const rows = parseCSV(e.target.result);
+    if (!rows.length) { toast("CSV vacío o inválido", "error"); return; }
+    document.getElementById("results-pill").style.display = "flex";
+    document.getElementById("results-fname").textContent = file.name;
+    document.getElementById("results-rows").textContent = rows.length + " registros";
+    const resultMap = {};
+    rows.forEach(r => { const p = normalizePhone(r[PHONE_COL]); if (p) resultMap[p] = r; });
+    let matched = 0;
+    localData = localData.map(row => {
+      const match = resultMap[normalizePhone(row[PHONE_COL])];
+      if (match) {
+        matched++;
+        return { ...row, "Calificación": match["Calificación"]||row["Calificación"]||"", "Contactación": match["Contactación"]||row["Contactación"]||"", "Intentos": match["Intentos"]??row["Intentos"]??"" };
+      }
+      return row;
+    });
+    document.getElementById("merge-info").style.display = "block";
+    document.getElementById("merge-detail").innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px;">
+        <div class="metric-card"><div class="metric-label">En resultados</div><div class="metric-value">${rows.length}</div></div>
+        <div class="metric-card"><div class="metric-label">Matcheados</div><div class="metric-value c-green">${matched}</div></div>
+        <div class="metric-card"><div class="metric-label">Sin match</div><div class="metric-value c-amber">${localData.length - matched}</div></div>
+      </div>`;
+    renderPreview(localData);
+    if (scriptUrl) {
+      toast("Mergeando en Drive…");
+      const res = await apiPost({ action:"mergeResults", rows });
+      if (res.ok) toast(`Merge completo: ${res.matched} de ${res.total} actualizados ✓`, "success");
+      else toast("Error en merge: " + res.error, "error");
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ── Preview ───────────────────────────────────────────────────
+function renderPreview(data) {
+  const preview = (data||localData).slice(0, 5);
+  document.getElementById("preview-badge").textContent = localData.length + " registros totales";
+  document.getElementById("preview-table").innerHTML =
+    `<thead><tr>${COLS_PREVIEW.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>` +
+    preview.map(r=>`<tr>${COLS_PREVIEW.map(c=>`<td>${r[c]||"—"}</td>`).join("")}</tr>`).join("") +
+    `</tbody>`;
+}
+
+// ── Dashboard ─────────────────────────────────────────────────
+function updateDashboard(stats) {
+  const { total, contactados, calificados, sinTrabajar, contactMap, calMap, carreraMap } = stats;
+  document.getElementById("m-total").textContent = total;
+  document.getElementById("m-contactados").textContent = contactados;
+  document.getElementById("m-contactados-pct").textContent = total ? Math.round(contactados/total*100) + "% del total" : "—";
+  document.getElementById("m-calificados").textContent = calificados;
+  document.getElementById("m-calificados-pct").textContent = total ? Math.round(calificados/total*100) + "% calificados" : "—";
+  document.getElementById("m-sintrabajar").textContent = sinTrabajar;
+  const contactFills = ["fill-teal","fill-blue","fill-amber","fill-gray","fill-red","fill-purple","fill-gray"];
+  renderBars("chart-contactacion", contactMap, contactFills);
+  const calFills = ["fill-amber","fill-red","fill-green","fill-gray","fill-blue"];
+  renderBars("chart-calificacion", calMap, calFills);
+  renderBars("chart-carreras", carreraMap, Array(20).fill("fill-teal"));
+}
+
+function renderBars(containerId, map, fills) {
+  const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,7);
+  const max = entries[0]?.[1] || 1;
+  document.getElementById(containerId).innerHTML = entries.map(([k,v],i) =>
+    `<div class="bar-row">
+      <span class="bar-label" title="${k}">${k}</span>
+      <div class="bar-track"><div class="bar-fill ${fills[i]||"fill-gray"}" style="width:${Math.round(v/max*100)}%"></div></div>
+      <span class="bar-count">${v}</span>
+    </div>`
+  ).join("");
+}
+
+// ── Filtros campaña ───────────────────────────────────────────
+function updateCarreraFilter() {
+  const carreras = [...new Set(localData.map(r=>r["Carrera"]).filter(Boolean))].sort();
+  const sel = document.getElementById("f-carrera");
+  sel.innerHTML = `<option value="">Todas las carreras</option>` + carreras.map(c=>`<option value="${c}">${c}</option>`).join("");
+}
+
+function getFiltered() {
+  const car = document.getElementById("f-carrera").value;
+  const cal = document.getElementById("f-calificacion").value;
+  const con = document.getElementById("f-contactacion").value;
+  const att = document.getElementById("f-intentos").value;
+  return localData.filter(r => {
+    if (car && r["Carrera"] !== car) return false;
+    const rCal = r["Calificación"] || "";
+    if (cal === "__vacio__" && rCal) return false;
+    if (cal && cal !== "__vacio__" && rCal !== cal) return false;
+    const rCon = r["Contactación"] || "";
+    if (con === "__vacio__" && rCon) return false;
+    if (con && con !== "__vacio__" && rCon !== con) return false;
+    if (att !== "" && parseInt(r["Intentos"]||"0") > parseInt(att)) return false;
+    return true;
+  });
+}
+
+function applyFilters() {
+  if (!localData.length) return;
+  const filtered = getFiltered();
+  document.getElementById("filtered-badge").textContent = filtered.length + " leads";
+  const ct = document.getElementById("campaign-table");
+  if (!filtered.length) { ct.innerHTML = `<div class="empty"><i class="ti ti-mood-empty"></i><p>Ningún lead con esos filtros</p></div>`; return; }
+  const show = filtered.slice(0, 100);
+  ct.innerHTML = `<table><thead><tr>${COLS_PREVIEW.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>` +
+    show.map(r=>`<tr><td>${r["Nombre"]||"—"}</td><td>${r["Carrera"]||"—"}</td><td>${r[PHONE_COL]||"—"}</td><td>${badgeCon(r["Contactación"])}</td><td>${badgeCal(r["Calificación"])}</td><td>${r["Intentos"]||"0"}</td></tr>`).join("") +
+    `</tbody></table>` +
+    (filtered.length > 100 ? `<div style="padding:8px 1rem;font-size:12px;color:var(--text-tertiary);">Mostrando 100 de ${filtered.length} — exportá para obtener todos</div>` : "");
+}
+
+function badgeCon(v) {
+  const m = { "Contactado":"badge-green", "Contestador":"badge-blue", "Cliente no atiende":"badge-amber", "Abandonada por cliente":"badge-red" };
+  return `<span class="badge ${m[v]||"badge-gray"}">${v||"—"}</span>`;
+}
+
+function badgeCal(v) {
+  const m = { "DESCARTE":"badge-red", "BUZON":"badge-amber", "AGENDADO PARA SEGUIMIENTO":"badge-green" };
+  return `<span class="badge ${v?m[v]||"badge-gray":"badge-gray"}">${v||"—"}</span>`;
+}
+
+// ── Exportar campaña ──────────────────────────────────────────
+async function exportCampaign() {
+  const filtered = getFiltered();
+  if (!filtered.length) { toast("No hay leads con esos filtros", "error"); return; }
+  const name = document.getElementById("campaign-name").value.trim() || "CAMPAÑA_" + new Date().toISOString().slice(0,10);
+  const csv = [COLS_EXPORT.join(","), ...filtered.map(r => COLS_EXPORT.map(c=>`"${r[c]||""}"`).join(","))].join("\n");
+  const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name.replace(/\s+/g,"_") + ".csv"; a.click();
+  URL.revokeObjectURL(url);
+  const entry = { name, leads: filtered.length, carrera: document.getElementById("f-carrera").value||"Todas", cal: document.getElementById("f-calificacion").value||"—", con: document.getElementById("f-contactacion").value||"—", intentos: document.getElementById("f-intentos").value||"—", date: new Date().toLocaleDateString("es-AR") };
+  campaignHistory.unshift(entry);
+  localStorage.setItem("cm_history", JSON.stringify(campaignHistory.slice(0, 50)));
+  renderHistory();
+  if (scriptUrl) apiPost({ action:"logCampaign", entry });
+  toast(`Campaña "${name}" exportada — ${filtered.length} leads ✓`, "success");
+}
+
+// ── Historial ─────────────────────────────────────────────────
+function renderHistory() {
+  const list = document.getElementById("history-list");
+  if (!campaignHistory.length) { list.innerHTML = `<div class="empty"><i class="ti ti-clock"></i><p>Las campañas exportadas aparecerán acá</p></div>`; return; }
+  list.innerHTML = campaignHistory.map(h =>
+    `<div class="history-item">
+      <div class="history-icon"><i class="ti ti-file-export"></i></div>
+      <div class="history-info">
+        <h4>${h.name}</h4>
+        <p>${h.leads} leads · ${h.carrera} · Cal: ${h.cal} · Con: ${h.con} · Int: ${h.intentos}</p>
+      </div>
+      <div class="history-meta">
+        <span class="badge badge-green">${h.leads} leads</span>
+        <span style="font-size:11px;color:var(--text-tertiary);">${h.date}</span>
+      </div>
+    </div>`
+  ).join("");
+}
+
+// ── Toast ─────────────────────────────────────────────────────
+function toast(msg, type="") {
+  const wrap = document.getElementById("toast-wrap");
+  const el = document.createElement("div");
+  el.className = "toast" + (type ? " " + type : "");
+  el.innerHTML = `<i class="ti ti-${type==="error"?"alert-circle":type==="success"?"circle-check":"info-circle"}"></i> ${msg}`;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+</script>
+</body>
+</html>
