@@ -693,20 +693,21 @@ function renderPreview(data) {
   const previewRows = data.slice(0, 5);
   document.getElementById("preview-badge").textContent = data.length + " registros totales";
   
-  // 1. Detectamos dinámicamente qué columnas de identidad existen en el archivo real
-  const firstRow = data[0];
+  // 1. Identificamos las claves reales que contiene el objeto actual en memoria
+  const firstRow = previewRows[0];
   const keys = Object.keys(firstRow);
   
+  // 2. Buscamos coincidencias flexibles para Nombre y Teléfono (Identidad fija)
   const nmk = keys.find(k => k.toLowerCase().trim() === "nombre") || keys[0];
   const pk  = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || keys[2];
 
-  // 2. Para las columnas operativas, buscamos variaciones o dejamos el nombre estándar
+  // 3. Para las operativas, buscamos variaciones exactas dentro del objeto
   const cak = keys.find(k => k.toLowerCase().includes("calificac")) || "Calificación";
   const cok = keys.find(k => k.toLowerCase().includes("contactac")) || "Contactación";
   const ink = keys.find(k => k.toLowerCase().includes("intento"))   || "Intentos";
   const dsk = keys.find(k => k.toLowerCase().includes("descarte"))   || "Motivos de Descarte";
 
-  // 3. Renderizamos la tabla de forma segura
+  // 4. Armamos la estructura de la tabla
   document.getElementById("preview-table").innerHTML =
     `<thead>
       <tr>
@@ -720,9 +721,11 @@ function renderPreview(data) {
     </thead>
     <tbody>` +
     previewRows.map(r => {
-      // Extraemos el valor si la llave existe; de lo contrario ponemos "—"
+      // Extraemos el valor de forma segura. Si no existe la propiedad en el objeto, ponemos "—"
       const nombre   = r[nmk] !== undefined ? r[nmk] : "—";
       const telefono = r[pk]  !== undefined ? r[pk]  : "—";
+      
+      // Chequeamos dinámicamente si la fila ya fue enriquecida por algún cruce
       const calif    = r[cak] !== undefined ? r[cak] : "—";
       const contac   = r[cok] !== undefined ? r[cok] : "—";
       const intentos = r[ink] !== undefined && r[ink] !== "" ? r[ink] : "0";
@@ -731,8 +734,8 @@ function renderPreview(data) {
       return `<tr>
         <td>${nombre}</td>
         <td>${telefono}</td>
-        <td>${calif}</td>
-        <td>${contac}</td>
+        <td><span style="font-weight:500;">${calif}</span></td>
+        <td><span style="font-weight:500;">${contac}</span></td>
         <td>${intentos}</td>
         <td><span style="color:var(--red-text); font-weight:600;">${descarte}</span></td>
       </tr>`;
