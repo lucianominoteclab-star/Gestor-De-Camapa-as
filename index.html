@@ -616,19 +616,43 @@ function handleDescartes(input) {
 
     if (!localData.length) { toast("Cargá primero la base original para poder cruzar los datos", "error"); return; }
 
-    // Cruce en caliente en la memoria local (Navegador)
-    const filePhoneKey = getFlexibleKey(rows[0], "Telefono");
-    const fileDescKey  = getFlexibleKey(rows[0], "Descarte");
+    // --- DETECCIÓN NATIVA SIN DEPENDER DE GETFLEXIBLEKEY ---
+    const sampleDesc = rows[0];
+    const sampleBase = localData[0];
+
+    // Buscar columna de teléfono en el archivo de descartes (ej: "Telefono", "teléfono", etc.)
+    const filePhoneKey = Object.keys(sampleDesc).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "") === "telefono") || Object.keys(sampleDesc)[0];
+    // Buscar la columna "Descarte" exacta (la que trae el motivo largo)
+    const fileDescKey = Object.keys(sampleDesc).find(k => k.trim() === "Descarte") || "Descarte";
     
-    const basePhoneKey = getFlexibleKey(localData[0], "numero_de_telefono");
-    const baseDescKey  = getFlexibleKey(localData[0], "Motivos de Descarte");
+    // Buscar columna de teléfono en la base original (ej: "numero_de_telefono", "telefono", etc.)
+    const basePhoneKey = Object.keys(sampleBase).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || "numero_de_telefono";
+    // Forzamos el nombre de la columna destino
+    const baseDescKey = "Motivos de Descarte";
 
+    // Aseguramos que la columna exista en la memoria local
+    localData.forEach(row => {
+      if (row[baseDescKey] === undefined) row[baseDescKey] = "";
+    });
+
+    // Mapeamos los descartes por teléfono normalizado
     const descarteMap = {};
-    rows.forEach(r => { const p = normalizePhone(r[filePhoneKey]); if (p) descarteMap[p] = r[fileDescKey]; });
+    rows.forEach(r => { 
+      if (typeof normalizePhone === 'function') {
+        const p = normalizePhone(r[filePhoneKey]); 
+        if (p && r[fileDescKey]) descarteMap[p] = r[fileDescKey];
+      } else {
+        // Por si acaso normalizePhone tampoco estuviera definida, limpiamos básico
+        const p = String(r[filePhoneKey]).replace(/\D/g, "");
+        if (p && r[fileDescKey]) descarteMap[p] = r[fileDescKey];
+      }
+    });
 
+    // Cruce en caliente
     let matched = 0;
     localData = localData.map(row => {
-      const motivo = descarteMap[normalizePhone(row[basePhoneKey])];
+      const pClean = typeof normalizePhone === 'function' ? normalizePhone(row[basePhoneKey]) : String(row[basePhoneKey]).replace(/\D/g, "");
+      const motivo = descarteMap[pClean];
       if (motivo) {
         matched++;
         row[baseDescKey] = motivo;
@@ -636,20 +660,31 @@ function handleDescartes(input) {
       return row;
     });
 
+    // Envío a Google Drive
     toast("Cruzando motivos de descarte con la Sheet de Drive…");
     if (scriptUrl) {
-      const res = await apiPost({ action: "mergeDescartes", rows });
-      if (res.ok) {
-        toast(`Descartes unificados: ${res.matched} leads actualizados ✓`, "success");
-        refreshData(); // Actualiza dashboard y tablas
-      } else {
-        toast("Error en el proceso de Drive: " + res.error, "error");
+      try {
+        const res = await apiPost({ action: "mergeDescartes", rows: rows });
+        if (res && res.ok) {
+          toast(`Descartes unificados: ${matched} registros locales actualizados ✓`, "success");
+          
+          // Si refreshData existe, lo llamamos. Si no, usamos window.location.reload()
+          if (typeof refreshData === 'function') {
+            setTimeout(refreshData, 1000); 
+          } else {
+            setTimeout(() => window.location.reload(), 1500);
+          }
+        } else {
+          toast("Error en el proceso de Drive: " + (res?.error || "Error desconocido"), "error");
+        }
+      } catch(err) {
+        toast("Error de conexión con el Apps Script", "error");
+        console.error(err);
       }
     }
   };
   reader.readAsText(file);
 }
-
 // Modificar la función renderPreview original para que incluya la columna de Descarte al final:
 function renderPreview(data) {
   if (!data || !data.length) return;
