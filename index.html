@@ -689,19 +689,51 @@ function handleDescartes(input) {
 function renderPreview(data) {
   if (!data || !data.length) return;
   const sample = data[0];
-  const pk = getFlexibleKey(sample, "numero_de_telefono");
-  const cak = getFlexibleKey(sample, "Calificación");
-  const cok = getFlexibleKey(sample, "Contactación");
-  const ink = getFlexibleKey(sample, "Intentos");
-  const nmk = getFlexibleKey(sample, "Nombre");
-  const dsk = getFlexibleKey(sample, "Motivos de Descarte");
+  const keys = Object.keys(sample);
+
+  // Encontramos las columnas reales basándonos en lo que contenga el archivo mapeado
+  const nmk = keys.find(k => k.toLowerCase().trim() === "nombre") || keys[0];
+  const pk  = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || keys[2];
+  const cak = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "") === "calificacion") || "Calificación";
+  const cok = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "") === "contactacion") || "Contactación";
+  const ink = keys.find(k => k.toLowerCase().trim() === "intentos") || "Intentos";
+  
+  // Clave exacta que usamos para inyectar los descartes
+  const dsk = "Motivos de Descarte";
 
   const previewRows = data.slice(0, 5);
   document.getElementById("preview-badge").textContent = data.length + " registros totales";
   
   document.getElementById("preview-table").innerHTML =
-    `<thead><tr><th>Nombre</th><th>Teléfono</th><th>Calificación</th><th>Contactación</th><th>Intentos</th><th>Motivo Descarte</th></tr></thead><tbody>` +
-    previewRows.map(r=>`<tr><td>${r[nmk]||"—"}</td><td>${r[pk]||"—"}</td><td>${r[cak]||"—"}</td><td>${r[cok]||"—"}</td><td>${r[ink]||"0"}</td><td><span style="color:var(--red-text); font-weight:500;">${r[dsk]||"—"}</span></td></tr>`).join("") +
+    `<thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Teléfono</th>
+        <th>Calificación</th>
+        <th>Contactación</th>
+        <th>Intentos</th>
+        <th>Motivo Descarte</th>
+      </tr>
+    </thead>
+    <tbody>` +
+    previewRows.map(r => {
+      // Extraemos el valor usando la clave real detectada
+      const nombre = r[nmk] || "—";
+      const telefono = r[pk] || "—";
+      const calif = r[cak] || "—";
+      const contac = r[cok] || "—";
+      const intentos = r[ink] !== undefined && r[ink] !== "" ? r[ink] : "0";
+      const descarte = r[dsk] || "—";
+      
+      return `<tr>
+        <td>${nombre}</td>
+        <td>${telefono}</td>
+        <td>${calif}</td>
+        <td>${contac}</td>
+        <td>${intentos}</td>
+        <td><span style="color:var(--red-text); font-weight:600;">${descarte}</span></td>
+      </tr>`;
+    }).join("") +
     `</tbody>`;
 }
 // ── Preview ───────────────────────────────────────────────────
