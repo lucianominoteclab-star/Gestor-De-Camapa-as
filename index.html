@@ -545,142 +545,151 @@ function handleBase(input) {
     const rows = parseCSV(e.target.result);
     if (!rows.length) { toast("CSV vacío", "error"); return; }
     
-    // !!! ESTA LÍNEA ES CLAVE !!!
-    localData = rows; 
+    // Normalizamos las propiedades de la base original para asegurar consistencia
+    localData = rows.map(r => {
+      const newRow = {};
+      Object.keys(r).forEach(k => {
+        const cleanK = k.trim();
+        newRow[cleanK] = r[k];
+      });
+      // Nos aseguramos de dejar creadas vacías las columnas operativas si no existen
+      if (newRow["Calificación"] === undefined) newRow["Calificación"] = "—";
+      if (newRow["Contactación"] === undefined) newRow["Contactación"] = "—";
+      if (newRow["Intentos"] === undefined) newRow["Intentos"] = "0";
+      if (newRow["Motivos de Descarte"] === undefined) newRow["Motivos de Descarte"] = "—";
+      return newRow;
+    });
     
     document.getElementById("base-pill").style.display = "flex";
     document.getElementById("base-fname").textContent = file.name;
-    document.getElementById("base-rows").textContent = rows.length + " filas";
+    document.getElementById("base-rows").textContent = localData.length + " filas";
     
-    // Pintamos la vista previa al instante
     renderPreview(localData);
 
     toast("Subiendo base original a Drive…");
     if (scriptUrl) {
-      const res = await apiPost({ action: "uploadBase", rows });
+      const res = await apiPost({ action: "uploadBase", rows: localData });
       if (res.ok) toast("Base guardada en Google Sheets ✓", "success");
     }
   };
   reader.readAsText(file);
 }
-// ── Merge resultados ──────────────────────────────────────────
+
 function handleResults(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async e => {
     const rows = parseCSV(e.target.result);
-    if (!rows.length) { toast("CSV vacío o inválido", "error"); return; }
+    if (!rows.length) { toast("CSV vacío", "error"); return; }
+
+    if (!localData.length) { toast("Primero debés cargar la Base Original", "error"); return; }
+
     document.getElementById("results-pill").style.display = "flex";
     document.getElementById("results-fname").textContent = file.name;
     document.getElementById("results-rows").textContent = rows.length + " registros";
+
+    // Mapeo ultra flexible por teléfono de OmniLeads
     const resultMap = {};
-    rows.forEach(r => { const p = normalizePhone(r[PHONE_COL]); if (p) resultMap[p] = r; });
+    rows.forEach(r => {
+      const keys = Object.keys(r);
+      const phoneKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || keys[2];
+      const calKey   = keys.find(k => k.toLowerCase().includes("calificac")) || "Calificación";
+      const conKey   = keys.find(k => k.toLowerCase().includes("contactac")) || "Contactación";
+      const intKey   = keys.find(k => k.toLowerCase().includes("intento"))   || "Intentos";
+
+      if (phoneKey) {
+        const pClean = typeof normalizePhone === 'function' ? normalizePhone(r[phoneKey]) : String(r[phoneKey]).replace(/\D/g, "").slice(-10);
+        if (pClean) {
+          resultMap[pClean] = {
+            cal: r[calKey] || "",
+            con: r[conKey] || "",
+            int: r[intKey] !== undefined ? r[intKey] : ""
+          };
+        }
+      }
+    });
+
+    // Cruzamos localmente contra la memoria
     let matched = 0;
     localData = localData.map(row => {
-      const match = resultMap[normalizePhone(row[PHONE_COL])];
+      const keys = Object.keys(row);
+      const basePhoneKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono"));
+      const pClean = typeof normalizePhone === 'function' ? normalizePhone(row[basePhoneKey]) : String(row[basePhoneKey]).replace(/\D/g, "").slice(-10);
+      
+      const match = resultMap[pClean];
       if (match) {
         matched++;
-        return { ...row, "Calificación": match["Calificación"]||row["Calificación"]||"", "Contactación": match["Contactación"]||row["Contactación"]||"", "Intentos": match["Intentos"]??row["Intentos"]??"" };
+        if (match.cal) row["Calificación"] = match.cal;
+        if (match.con) row["Contactación"] = match.con;
+        if (match.int !== "")  row["Intentos"] = match.int;
       }
       return row;
     });
-    document.getElementById("merge-info").style.display = "block";
-    document.getElementById("merge-detail").innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px;">
-        <div class="metric-card"><div class="metric-label">En resultados</div><div class="metric-value">${rows.length}</div></div>
-        <div class="metric-card"><div class="metric-label">Matcheados</div><div class="metric-value c-green">${matched}</div></div>
-        <div class="metric-card"><div class="metric-label">Sin match</div><div class="metric-value c-amber">${localData.length - matched}</div></div>
-      </div>`;
+
     renderPreview(localData);
+
+    toast("Sincronizando resultados con Google Drive…");
     if (scriptUrl) {
-      toast("Mergeando en Drive…");
-      const res = await apiPost({ action:"mergeResults", rows });
-      if (res.ok) toast(`Merge completo: ${res.matched} de ${res.total} actualizados ✓`, "success");
-      else toast("Error en merge: " + res.error, "error");
+      const res = await apiPost({ action: "mergeResults", rows: rows });
+      if (res && res.ok) {
+        toast(`OmniLeads unificado: ${matched} leads actualizados ✓`, "success");
+        if (typeof refreshData === 'function') setTimeout(refreshData, 1000);
+      }
     }
   };
   reader.readAsText(file);
 }
-// Agregar esta función al bloque de funciones de JavaScript en tu index.html
+
 function handleDescartes(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async e => {
     const rows = parseCSV(e.target.result);
-    if (!rows.length) { toast("CSV de descartes vacío o inválido", "error"); return; }
-    
+    if (!rows.length) { toast("CSV vacío", "error"); return; }
+
+    if (!localData.length) { toast("Primero debés cargar la Base Original", "error"); return; }
+
     document.getElementById("descartes-pill").style.display = "flex";
     document.getElementById("descartes-fname").textContent = file.name;
     document.getElementById("descartes-rows").textContent = rows.length + " descartes";
 
-    if (!localData.length) { toast("Cargá primero la base original para poder cruzar los datos", "error"); return; }
-
-    // --- DETECCIÓN NATIVA SIN DEPENDER DE GETFLEXIBLEKEY ---
-    const sampleDesc = rows[0];
-    const sampleBase = localData[0];
-
-    // Buscar columna de teléfono en el archivo de descartes (ej: "Telefono", "teléfono", etc.)
-    const filePhoneKey = Object.keys(sampleDesc).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "") === "telefono") || Object.keys(sampleDesc)[0];
-    // Buscar la columna "Descarte" exacta (la que trae el motivo largo)
-    const fileDescKey = Object.keys(sampleDesc).find(k => k.trim() === "Descarte") || "Descarte";
-    
-    // Buscar columna de teléfono en la base original (ej: "numero_de_telefono", "telefono", etc.)
-    const basePhoneKey = Object.keys(sampleBase).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || "numero_de_telefono";
-    // Forzamos el nombre de la columna destino
-    const baseDescKey = "Motivos de Descarte";
-
-    // Aseguramos que la columna exista en la memoria local
-    localData.forEach(row => {
-      if (row[baseDescKey] === undefined) row[baseDescKey] = "";
-    });
-
-    // Mapeamos los descartes por teléfono normalizado
+    // Mapeo ultra flexible para los motivos de descartes
     const descarteMap = {};
-    rows.forEach(r => { 
-      if (typeof normalizePhone === 'function') {
-        const p = normalizePhone(r[filePhoneKey]); 
-        if (p && r[fileDescKey]) descarteMap[p] = r[fileDescKey];
-      } else {
-        // Por si acaso normalizePhone tampoco estuviera definida, limpiamos básico
-        const p = String(r[filePhoneKey]).replace(/\D/g, "");
-        if (p && r[fileDescKey]) descarteMap[p] = r[fileDescKey];
+    rows.forEach(r => {
+      const keys = Object.keys(r);
+      const phoneKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || "Telefono";
+      const descKey  = keys.find(k => k.trim() === "Descarte") || keys.find(k => k.toLowerCase().includes("descarte")) || "Descarte";
+
+      const pClean = typeof normalizePhone === 'function' ? normalizePhone(r[phoneKey]) : String(r[phoneKey]).replace(/\D/g, "").slice(-10);
+      if (pClean && r[descKey]) {
+        descarteMap[pClean] = r[descKey];
       }
     });
 
-    // Cruce en caliente
     let matched = 0;
     localData = localData.map(row => {
-      const pClean = typeof normalizePhone === 'function' ? normalizePhone(row[basePhoneKey]) : String(row[basePhoneKey]).replace(/\D/g, "");
+      const keys = Object.keys(row);
+      const basePhoneKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono"));
+      const pClean = typeof normalizePhone === 'function' ? normalizePhone(row[basePhoneKey]) : String(row[basePhoneKey]).replace(/\D/g, "").slice(-10);
+
       const motivo = descarteMap[pClean];
       if (motivo) {
         matched++;
-        row[baseDescKey] = motivo;
+        row["Motivos de Descarte"] = motivo;
       }
       return row;
     });
 
-    // Envío a Google Drive
-    toast("Cruzando motivos de descarte con la Sheet de Drive…");
+    renderPreview(localData);
+
+    toast("Sincronizando motivos de descarte con Google Drive…");
     if (scriptUrl) {
-      try {
-        const res = await apiPost({ action: "mergeDescartes", rows: rows });
-        if (res && res.ok) {
-          toast(`Descartes unificados: ${matched} registros locales actualizados ✓`, "success");
-          
-          // Si refreshData existe, lo llamamos. Si no, usamos window.location.reload()
-          if (typeof refreshData === 'function') {
-            setTimeout(refreshData, 1000); 
-          } else {
-            setTimeout(() => window.location.reload(), 1500);
-          }
-        } else {
-          toast("Error en el proceso de Drive: " + (res?.error || "Error desconocido"), "error");
-        }
-      } catch(err) {
-        toast("Error de conexión con el Apps Script", "error");
-        console.error(err);
+      const res = await apiPost({ action: "mergeDescartes", rows: rows });
+      if (res && res.ok) {
+        toast(`Descartes unificados: ${matched} registros actualizados ✓`, "success");
+        if (typeof refreshData === 'function') setTimeout(refreshData, 1000);
       }
     }
   };
@@ -693,21 +702,12 @@ function renderPreview(data) {
   const previewRows = data.slice(0, 5);
   document.getElementById("preview-badge").textContent = data.length + " registros totales";
   
-  // 1. Identificamos las claves reales que contiene el objeto actual en memoria
-  const firstRow = previewRows[0];
+  const firstRow = data[0];
   const keys = Object.keys(firstRow);
   
-  // 2. Buscamos coincidencias flexibles para Nombre y Teléfono (Identidad fija)
   const nmk = keys.find(k => k.toLowerCase().trim() === "nombre") || keys[0];
   const pk  = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || keys[2];
 
-  // 3. Para las operativas, buscamos variaciones exactas dentro del objeto
-  const cak = keys.find(k => k.toLowerCase().includes("calificac")) || "Calificación";
-  const cok = keys.find(k => k.toLowerCase().includes("contactac")) || "Contactación";
-  const ink = keys.find(k => k.toLowerCase().includes("intento"))   || "Intentos";
-  const dsk = keys.find(k => k.toLowerCase().includes("descarte"))   || "Motivos de Descarte";
-
-  // 4. Armamos la estructura de la tabla
   document.getElementById("preview-table").innerHTML =
     `<thead>
       <tr>
@@ -720,6 +720,18 @@ function renderPreview(data) {
       </tr>
     </thead>
     <tbody>` +
+    previewRows.map(r => {
+      return `<tr>
+        <td>${r[nmk] || "—"}</td>
+        <td>${r[pk] || "—"}</td>
+        <td><span class="badge ${r["Calificación"] && r["Calificación"] !== "—" ? 'badge-amber' : ''}">${r["Calificación"] || "—"}</span></td>
+        <td>${r["Contactación"] || "—"}</td>
+        <td>${r["Intentos"] !== undefined ? r["Intentos"] : "0"}</td>
+        <td><span style="color:var(--red-text); font-weight:600;">${r["Motivos de Descarte"] || "—"}</span></td>
+      </tr>`;
+    }).join("") +
+    `</tbody>`;
+}
     previewRows.map(r => {
       // Extraemos el valor de forma segura. Si no existe la propiedad en el objeto, ponemos "—"
       const nombre   = r[nmk] !== undefined ? r[nmk] : "—";
