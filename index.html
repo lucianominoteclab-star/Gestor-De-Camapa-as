@@ -116,7 +116,7 @@ nav { padding: 0.5rem 0; flex: 1; }
 .fill-teal   { background: #5DCAA5; }
 
 /* Upload */
-.upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.upload-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem; }
 .drop-zone { border: 1px dashed var(--border-md); border-radius: var(--radius); padding: 1.5rem 1rem; text-align: center; cursor: pointer; transition: background 0.12s; }
 .drop-zone:hover { background: var(--bg-secondary); }
 .drop-zone i { font-size: 26px; color: var(--text-tertiary); display: block; margin-bottom: 6px; }
@@ -155,7 +155,6 @@ tr:hover td { background: var(--bg-secondary); }
 /* Filtros campaña */
 .filter-card { background: var(--bg-surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
 .filter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.875rem; }
-.filter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.875rem; }
 .filter-group { display: flex; flex-direction: column; gap: 4px; }
 .filter-group label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
 .filter-group select, .filter-group input[type=text] { font-size: 13px; padding: 6px 8px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--bg-secondary); color: var(--text); font-family: inherit; }
@@ -175,16 +174,11 @@ tr:hover td { background: var(--bg-secondary); }
 .history-info h4 { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
 .history-info p { font-size: 12px; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .history-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
-
-/* Loader */
-.loader { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border-md); border-top-color: var(--green); border-radius: 50%; animation: spin 0.7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
 <div class="app">
-  <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-header">
       <h1>Campaign Manager</h1>
@@ -216,7 +210,6 @@ tr:hover td { background: var(--bg-secondary); }
     </div>
   </div>
 
-  <!-- Main -->
   <div class="main">
     <div class="topbar">
       <h2 id="page-title">Dashboard</h2>
@@ -229,8 +222,6 @@ tr:hover td { background: var(--bg-secondary); }
     </div>
 
     <div class="content">
-
-      <!-- DASHBOARD -->
       <div id="page-dashboard" class="page active">
         <div class="metric-grid">
           <div class="metric-card">
@@ -270,9 +261,8 @@ tr:hover td { background: var(--bg-secondary); }
         </div>
       </div>
 
-      <!-- DATOS -->
       <div id="page-datos" class="page">
-        <div class="upload-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="upload-grid">
           <div class="card">
             <div class="card-title">1. Base original</div>
             <p style="font-size:12px; color:var(--text-tertiary); margin-bottom:0.875rem;">Subí tu CSV inicial con los datos de los alumnos.</p>
@@ -319,11 +309,6 @@ tr:hover td { background: var(--bg-secondary); }
           </div>
         </div>
 
-        <div id="merge-info" style="display:none" class="card" style="margin-bottom:1rem;">
-          <div class="card-title">Resultado del acoplamiento</div>
-          <div id="merge-detail"></div>
-        </div>
-
         <div id="preview-wrap" style="display:block; margin-top: 15px;">
           <div class="table-wrap">
             <div class="table-header">
@@ -335,7 +320,6 @@ tr:hover td { background: var(--bg-secondary); }
         </div>
       </div>
 
-      <!-- CAMPAÑA -->
       <div id="page-campana" class="page">
         <div class="filter-card">
           <div class="filter-grid">
@@ -406,29 +390,23 @@ tr:hover td { background: var(--bg-secondary); }
         </div>
       </div>
 
-      <!-- HISTORIAL -->
       <div id="page-historial" class="page">
         <div id="history-list">
           <div class="empty"><i class="ti ti-clock"></i><p>Las campañas exportadas aparecerán acá</p></div>
         </div>
       </div>
-
     </div>
   </div>
 </div>
 
-<!-- Toasts -->
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
 const PHONE_COL = "numero_de_telefono";
-const COLS_EXPORT = ["Nombre","Correo","numero_de_telefono","Numero_de_telefono_de_WhatsApp","Carrera"];
-const COLS_PREVIEW = ["Nombre","Carrera","numero_de_telefono","Calificación","Contactación","Intentos"];
 let localData = [];
 let scriptUrl = localStorage.getItem("cm_script_url") || "";
 let campaignHistory = JSON.parse(localStorage.getItem("cm_history") || "[]");
 
-// ── Init ──────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
   if (scriptUrl) document.getElementById("script-url-input").value = scriptUrl;
   renderHistory();
@@ -438,7 +416,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (scriptUrl) testConnection();
 });
 
-// ── Nav ───────────────────────────────────────────────────────
 function showPage(page) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
@@ -449,7 +426,6 @@ function showPage(page) {
   if (page === "campana" && localData.length) applyFilters();
 }
 
-// ── Script URL / conexión ─────────────────────────────────────
 function saveScriptUrl(val) {
   scriptUrl = val.trim();
   localStorage.setItem("cm_script_url", scriptUrl);
@@ -466,7 +442,7 @@ async function testConnection() {
       refreshData();
     } else {
       setConnStatus("error");
-      toast("Error al conectar: " + (res.error || "respuesta inesperada"), "error");
+      toast("Error al conectar", "error");
     }
   } catch(e) {
     setConnStatus("error");
@@ -481,27 +457,21 @@ function setConnStatus(state) {
   const [color, text] = map[state] || map.default;
   dot.style.background = color;
   lbl.textContent = text;
-  dot.classList.toggle("connected", state === "connected");
 }
 
-// ── API helpers ───────────────────────────────────────────────
 async function apiFetch(action) {
-  const url = scriptUrl + "?action=" + action + "&t=" + Date.now();
-  const res = await fetch(url, { redirect: "follow" });
-  return res.json();
+  return fetch(scriptUrl + "?action=" + action + "&t=" + Date.now(), { redirect: "follow" }).then(r => r.json());
 }
 
 async function apiPost(body) {
-  const res = await fetch(scriptUrl, {
+  return fetch(scriptUrl, {
     method: "POST",
     redirect: "follow",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(body)
-  });
-  return res.json();
+  }).then(r => r.json());
 }
 
-// ── Refresh desde Drive ───────────────────────────────────────
 async function refreshData() {
   if (!scriptUrl) return;
   try {
@@ -522,11 +492,10 @@ async function refreshData() {
       renderPreview(localData);
     }
   } catch(e) {
-    toast("Error al leer datos de Drive", "error");
+    toast("Error al sincronizar con Drive", "error");
   }
 }
 
-// ── CSV parser ────────────────────────────────────────────────
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
@@ -544,7 +513,7 @@ function normalizePhone(p) {
   return String(p||"").replace(/\D/g,"").slice(-10);
 }
 
-// ── Subir base original ───────────────────────────────────────
+// ── 1. CARGA DE BASE ORIGINAL (TRADUCCIÓN CLAVE AQUÍ) ────────
 function handleBase(input) {
   const file = input.files[0];
   if (!file) return;
@@ -553,17 +522,25 @@ function handleBase(input) {
     const rows = parseCSV(e.target.result);
     if (!rows.length) { toast("CSV vacío", "error"); return; }
     
+    // Traducimos y estandarizamos nombres de columnas al formato exacto que Code.gs necesita
     localData = rows.map(r => {
-      const newRow = {};
-      Object.keys(r).forEach(k => {
-        const cleanK = k.trim();
-        newRow[cleanK] = r[k];
-      });
-      if (newRow["Calificación"] === undefined) newRow["Calificación"] = "—";
-      if (newRow["Contactación"] === undefined) newRow["Contactación"] = "—";
-      if (newRow["Intentos"] === undefined) newRow["Intentos"] = "0";
-      if (newRow["Motivos de Descarte"] === undefined) newRow["Motivos de Descarte"] = "—";
-      return newRow;
+      const keys = Object.keys(r);
+      const nmk = keys.find(k => k.toLowerCase().trim() === "nombre") || "Nombre";
+      const crk = keys.find(k => k.toLowerCase().trim() === "correo") || "Correo";
+      const pKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || "numero_de_telefono";
+      const cark = keys.find(k => k.toLowerCase().trim() === "carrera") || "Carrera";
+      
+      return {
+        "Nombre": r[nmk] || "",
+        "Correo": r[crk] || "",
+        "numero_de_telefono": r[pKey] || "",
+        "Numero_de_telefono_de_WhatsApp": r["Numero_de_telefono_de_WhatsApp"] || r[pKey] || "",
+        "Carrera": r[cark] || "",
+        "Calificación": "—",
+        "Contactación": "—",
+        "Intentos": "0",
+        "Motivos de Descarte": "—"
+      };
     });
     
     document.getElementById("base-pill").style.display = "flex";
@@ -575,12 +552,16 @@ function handleBase(input) {
     toast("Subiendo base original a Drive…");
     if (scriptUrl) {
       const res = await apiPost({ action: "uploadBase", rows: localData });
-      if (res.ok) toast("Base guardada en Google Sheets ✓", "success");
+      if (res.ok) {
+        toast("Base original guardada en Google Sheets ✓", "success");
+        setTimeout(refreshData, 1000);
+      }
     }
   };
   reader.readAsText(file);
 }
 
+// ── 2. CARGA DE RESULTADOS OMNILEADS ─────────────────────────
 function handleResults(input) {
   const file = input.files[0];
   if (!file) return;
@@ -616,10 +597,7 @@ function handleResults(input) {
 
     let matched = 0;
     localData = localData.map(row => {
-      const keys = Object.keys(row);
-      const basePhoneKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono"));
-      const pClean = normalizePhone(row[basePhoneKey]);
-      
+      const pClean = normalizePhone(row["numero_de_telefono"]);
       const match = resultMap[pClean];
       if (match) {
         matched++;
@@ -630,17 +608,13 @@ function handleResults(input) {
       return row;
     });
 
-    // Forzar actualización visual automática
-    document.getElementById("merge-info").style.display = "block";
-    document.getElementById("merge-detail").innerHTML = `<p style="font-size:13px; color:var(--green-text);"><strong>OmniLeads acoplado con éxito:</strong> Se encontraron ${matched} coincidencias telefónicas en la base activa.</p>`;
-
     renderPreview(localData);
 
     toast("Sincronizando resultados con Google Drive…");
     if (scriptUrl) {
       const res = await apiPost({ action: "mergeResults", rows: rows });
       if (res && res.ok) {
-        toast(`OmniLeads unificado: ${matched} leads actualizados ✓`, "success");
+        toast(`OmniLeads unificado: ${res.matched} leads actualizados ✓`, "success");
         setTimeout(refreshData, 1200);
       }
     }
@@ -648,6 +622,7 @@ function handleResults(input) {
   reader.readAsText(file);
 }
 
+// ── 3. CARGA DE BASE DE DESCARTES ────────────────────────────
 function handleDescartes(input) {
   const file = input.files[0];
   if (!file) return;
@@ -675,10 +650,7 @@ function handleDescartes(input) {
 
     let matched = 0;
     localData = localData.map(row => {
-      const keys = Object.keys(row);
-      const basePhoneKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono"));
-      const pClean = normalizePhone(row[basePhoneKey]);
-
+      const pClean = normalizePhone(row["numero_de_telefono"]);
       const motivo = descarteMap[pClean];
       if (motivo) {
         matched++;
@@ -693,7 +665,7 @@ function handleDescartes(input) {
     if (scriptUrl) {
       const res = await apiPost({ action: "mergeDescartes", rows: rows });
       if (res && res.ok) {
-        toast(`Descartes unificados: ${matched} registros actualizados ✓`, "success");
+        toast(`Descartes unificados: ${res.matched || matched} registros actualizados ✓`, "success");
         setTimeout(refreshData, 1200);
       }
     }
@@ -701,18 +673,12 @@ function handleDescartes(input) {
   reader.readAsText(file);
 }
 
-// ── Preview Única y Protegida ──────────────────────────────────
+// ── VISTA PREVIA DE TABLA ─────────────────────────────────────
 function renderPreview(data) {
   if (!data || !data.length) return;
   
   const previewRows = data.slice(0, 5);
   document.getElementById("preview-badge").textContent = data.length + " registros totales";
-  
-  const firstRow = data[0];
-  const keys = Object.keys(firstRow);
-  
-  const nmk = keys.find(k => k.toLowerCase().trim() === "nombre") || keys[0];
-  const pKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono"));
 
   document.getElementById("preview-table").innerHTML =
     `<thead>
@@ -727,17 +693,17 @@ function renderPreview(data) {
     </thead>
     <tbody>` +
     previewRows.map(r => {
-      const telValor = pKey ? r[pKey] : "—";
+      const telValor = r["numero_de_telefono"] || "—";
       const calif = r["Calificación"] || "—";
       const contac = r["Contactación"] || "—";
       const intentos = r["Intentos"] !== undefined ? r["Intentos"] : "0";
       const descarte = r["Motivos de Descarte"] || "—";
 
       return `<tr>
-        <td>${r[nmk] || "—"}</td>
+        <td>${r["Nombre"] || "—"}</td>
         <td>${telValor || "—"}</td>
-        <td><span class="badge ${calif !== '—' ? 'badge-amber' : 'badge-gray'}">${calif}</span></td>
-        <td><span class="badge ${contac !== '—' ? 'badge-blue' : 'badge-gray'}">${contac}</span></td>
+        <td><span class="badge ${calif !== '—' && calif !== '' ? 'badge-amber' : 'badge-gray'}">${calif}</span></td>
+        <td><span class="badge ${contac !== '—' && contac !== '' ? 'badge-blue' : 'badge-gray'}">${contac}</span></td>
         <td>${intentos}</td>
         <td><span style="color:var(--red-text); font-weight:600;">${descarte}</span></td>
       </tr>`;
@@ -745,15 +711,16 @@ function renderPreview(data) {
     `</tbody>`;
 }
 
-// ── Dashboard ─────────────────────────────────────────────────
+// ── DASHBOARD METRICS ─────────────────────────────────────────
 function updateDashboard(stats) {
   const { total, contactados, calificados, sinTrabajar, contactMap, calMap, carreraMap } = stats;
-  document.getElementById("m-total").textContent = total;
-  document.getElementById("m-contactados").textContent = contactados;
+  document.getElementById("m-total").textContent = total || 0;
+  document.getElementById("m-contactados").textContent = contactados || 0;
   document.getElementById("m-contactados-pct").textContent = total ? Math.round(contactados/total*100) + "% del total" : "—";
-  document.getElementById("m-calificados").textContent = calificados;
+  document.getElementById("m-calificados").textContent = calificados || 0;
   document.getElementById("m-calificados-pct").textContent = total ? Math.round(calificados/total*100) + "% calificados" : "—";
-  document.getElementById("m-sintrabajar").textContent = sinTrabajar;
+  document.getElementById("m-sintrabajar").textContent = sinTrabajar || 0;
+  
   const contactFills = ["fill-teal","fill-blue","fill-amber","fill-gray","fill-red","fill-purple","fill-gray"];
   renderBars("chart-contactacion", contactMap, contactFills);
   const calFills = ["fill-amber","fill-red","fill-green","fill-gray","fill-blue"];
@@ -762,7 +729,10 @@ function updateDashboard(stats) {
 }
 
 function renderBars(containerId, map, fills) {
-  if (!map) return;
+  if (!map || !Object.keys(map).length) {
+    document.getElementById(containerId).innerHTML = `<div class="empty"><i class="ti ti-chart-pie"></i><p>Sin datos</p></div>`;
+    return;
+  }
   const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,7);
   const max = entries[0]?.[1] || 1;
   document.getElementById(containerId).innerHTML = entries.map(([k,v],i) =>
@@ -774,7 +744,7 @@ function renderBars(containerId, map, fills) {
   ).join("");
 }
 
-// ── Filtros campaña ───────────────────────────────────────────
+// ── FILTROS Y EXPORTACIÓN ─────────────────────────────────────
 function updateCarreraFilter() {
   const carreras = [...new Set(localData.map(r=>r["Carrera"]).filter(Boolean))].sort();
   const sel = document.getElementById("f-carrera");
@@ -806,13 +776,11 @@ function applyFilters() {
   const ct = document.getElementById("campaign-table");
   if (!filtered.length) { ct.innerHTML = `<div class="empty"><i class="ti ti-mood-empty"></i><p>Ningún lead con esos filtros</p></div>`; return; }
   
-  const firstRow = localData[0] || {};
-  const keys = Object.keys(firstRow);
-  const pKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || PHONE_COL;
-
   const show = filtered.slice(0, 100);
-  ct.innerHTML = `<table><thead><tr>${COLS_PREVIEW.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>` +
-    show.map(r=>`<tr><td>${r["Nombre"]||"—"}</td><td>${r["Carrera"]||"—"}</td><td>${r[pKey]||"—"}</td><td>${badgeCal(r["Calificación"])}</td><td>${badgeCon(r["Contactación"])}</td><td>${r["Intentos"]||"0"}</td></tr>`).join("") +
+  const headersPreview = ["Nombre", "Carrera", "Teléfono", "Calificación", "Contactación", "Intentos"];
+  
+  ct.innerHTML = `<table><thead><tr>${headersPreview.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>` +
+    show.map(r=>`<tr><td>${r["Nombre"]||"—"}</td><td>${r["Carrera"]||"—"}</td><td>${r["numero_de_telefono"]||"—"}</td><td>${badgeCal(r["Calificación"])}</td><td>${badgeCon(r["Contactación"])}</td><td>${r["Intentos"]||"0"}</td></tr>`).join("") +
     `</tbody></table>` +
     (filtered.length > 100 ? `<div style="padding:8px 1rem;font-size:12px;color:var(--text-tertiary);">Mostrando 100 de ${filtered.length} — exportá para obtener todos</div>` : "");
 }
@@ -829,24 +797,19 @@ function badgeCal(v) {
   return `<span class="badge ${m[v]||"badge-gray"}">${v}</span>`;
 }
 
-// ── Exportar campaña ──────────────────────────────────────────
 async function exportCampaign() {
   const filtered = getFiltered();
   if (!filtered.length) { toast("No hay leads con esos filtros", "error"); return; }
   const name = document.getElementById("campaign-name").value.trim() || "CAMPAÑA_" + new Date().toISOString().slice(0,10);
   
-  const firstRow = localData[0] || {};
-  const keys = Object.keys(firstRow);
-  const pKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || PHONE_COL;
-
-  const csvCols = ["Nombre","Correo", pKey, "Numero_de_telefono_de_WhatsApp","Carrera"];
-
+  const csvCols = ["Nombre", "Correo", "numero_de_telefono", "Numero_de_telefono_de_WhatsApp", "Carrera"];
   const csv = [csvCols.join(","), ...filtered.map(r => csvCols.map(c=>`"${r[c]||""}"`).join(","))].join("\n");
   const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = name.replace(/\s+/g,"_") + ".csv"; a.click();
   URL.revokeObjectURL(url);
+  
   const entry = { name, leads: filtered.length, carrera: document.getElementById("f-carrera").value||"Todas", cal: document.getElementById("f-calificacion").value||"—", con: document.getElementById("f-contactacion").value||"—", intentos: document.getElementById("f-intentos").value||"—", date: new Date().toLocaleDateString("es-AR") };
   campaignHistory.unshift(entry);
   localStorage.setItem("cm_history", JSON.stringify(campaignHistory.slice(0, 50)));
@@ -855,7 +818,6 @@ async function exportCampaign() {
   toast(`Campaña "${name}" exportada — ${filtered.length} leads ✓`, "success");
 }
 
-// ── Historial ─────────────────────────────────────────────────
 function renderHistory() {
   const list = document.getElementById("history-list");
   if (!campaignHistory.length) { list.innerHTML = `<div class="empty"><i class="ti ti-clock"></i><p>Las campañas exportadas aparecerán acá</p></div>`; return; }
@@ -874,7 +836,6 @@ function renderHistory() {
   ).join("");
 }
 
-// ── Toast ─────────────────────────────────────────────────────
 function toast(msg, type="") {
   const wrap = document.getElementById("toast-wrap");
   const el = document.createElement("div");
