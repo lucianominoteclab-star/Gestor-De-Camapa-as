@@ -542,11 +542,13 @@ function handleBase(input) {
     renderPreview(localData);
     toast("Subiendo base original a Drive...");
     
-    if (scriptUrl) {
+  if (scriptUrl) {
       const res = await apiPost({ action: "uploadBase", rows: localData });
       if (res.ok) {
-        toast("Base guardada con éxito ✓", "success");
+        toast(`Base procesada: +${res.added} nuevos | ✓ ${res.updated} actualizados`, "success");
         setTimeout(refreshData, 1000);
+      } else {
+        toast("Error al subir los datos a Drive", "error");
       }
     }
   };
