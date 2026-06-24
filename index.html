@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Campaign Manager · Discador</title>
+<title>Gestir de Campañas -CENEDUDES-</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -312,7 +312,7 @@ tr:hover td { background: var(--bg-secondary); }
         <div id="preview-wrap" style="display:block; margin-top: 15px;">
           <div class="table-wrap">
             <div class="table-header">
-              <h3>Vista previa en tiempo real (Primeros registros unificados)</h3>
+              <h3>Vista previa en tiempo real</h3>
               <span id="preview-badge" class="badge badge-gray">—</span>
             </div>
             <table id="preview-table"></table>
@@ -348,10 +348,6 @@ tr:hover td { background: var(--bg-secondary); }
                 <option value="Contestador">Contestador</option>
                 <option value="Cliente no atiende">Cliente no atiende</option>
                 <option value="Abandonada por cliente">Abandonada por cliente</option>
-                <option value="Canales Saturados">Canales Saturados</option>
-                <option value="Ocupado">Ocupado</option>
-                <option value="Expirada">Expirada</option>
-                <option value="Canal congestionado">Canal congestionado</option>
               </select>
             </div>
           </div>
@@ -402,7 +398,6 @@ tr:hover td { background: var(--bg-secondary); }
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
-const PHONE_COL = "numero_de_telefono";
 let localData = [];
 let scriptUrl = localStorage.getItem("cm_script_url") || "";
 let campaignHistory = JSON.parse(localStorage.getItem("cm_history") || "[]");
@@ -432,7 +427,7 @@ function saveScriptUrl(val) {
 }
 
 async function testConnection() {
-  if (!scriptUrl) { toast("Pegá la URL del Apps Script primero", "error"); return; }
+  if (!scriptUrl) return;
   setConnStatus("connecting");
   try {
     const res = await apiFetch("ping");
@@ -442,11 +437,9 @@ async function testConnection() {
       refreshData();
     } else {
       setConnStatus("error");
-      toast("Error al conectar", "error");
     }
   } catch(e) {
     setConnStatus("error");
-    toast("No se pudo conectar. Revisá la URL.", "error");
   }
 }
 
@@ -476,23 +469,24 @@ async function refreshData() {
   if (!scriptUrl) return;
   try {
     const res = await apiFetch("getStats");
-    if (res.error) { toast(res.error, "error"); return; }
+    if (res.error) return;
     updateDashboard(res);
     document.getElementById("db-info").textContent = res.total + " leads en Drive";
+    
     const baseRes = await apiFetch("getBase");
     if (baseRes.rows) {
       localData = baseRes.rows.map(r => {
-        if (r["Calificación"] === undefined) r["Calificación"] = "—";
-        if (r["Contactación"] === undefined) r["Contactación"] = "—";
-        if (r["Intentos"] === undefined) r["Intentos"] = "0";
-        if (r["Motivos de Descarte"] === undefined) r["Motivos de Descarte"] = "—";
+        r["Calificación"] = r["Calificación"] || "—";
+        r["Contactación"] = r["Contactación"] || "—";
+        r["Intentos"] = r["Intentos"] !== undefined ? String(r["Intentos"]) : "0";
+        r["Motivos de Descarte"] = r["Motivos de Descarte"] || "—";
         return r;
       });
       updateCarreraFilter();
       renderPreview(localData);
     }
   } catch(e) {
-    toast("Error al sincronizar con Drive", "error");
+    console.error(e);
   }
 }
 
@@ -513,29 +507,27 @@ function normalizePhone(p) {
   return String(p||"").replace(/\D/g,"").slice(-10);
 }
 
-// ── 1. CARGA DE BASE ORIGINAL (TRADUCCIÓN CLAVE AQUÍ) ────────
 function handleBase(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async e => {
     const rows = parseCSV(e.target.result);
-    if (!rows.length) { toast("CSV vacío", "error"); return; }
+    if (!rows.length) return;
     
-    // Traducimos y estandarizamos nombres de columnas al formato exacto que Code.gs necesita
     localData = rows.map(r => {
       const keys = Object.keys(r);
-      const nmk = keys.find(k => k.toLowerCase().trim() === "nombre") || "Nombre";
-      const crk = keys.find(k => k.toLowerCase().trim() === "correo") || "Correo";
+      const nKey = keys.find(k => k.toLowerCase().trim() === "nombre") || "Nombre";
+      const cKey = keys.find(k => k.toLowerCase().trim() === "correo") || "Correo";
       const pKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || "numero_de_telefono";
-      const cark = keys.find(k => k.toLowerCase().trim() === "carrera") || "Carrera";
+      const carKey = keys.find(k => k.toLowerCase().trim() === "carrera") || "Carrera";
       
       return {
-        "Nombre": r[nmk] || "",
-        "Correo": r[crk] || "",
+        "Nombre": r[nKey] || "",
+        "Correo": r[cKey] || "",
         "numero_de_telefono": r[pKey] || "",
-        "Numero_de_telefono_de_WhatsApp": r["Numero_de_telefono_de_WhatsApp"] || r[pKey] || "",
-        "Carrera": r[cark] || "",
+        "Numero_de_telefono_de_WhatsApp": r["Numero_de_telefono_de_WhatsApp"] || "",
+        "Carrera": r[carKey] || "",
         "Calificación": "—",
         "Contactación": "—",
         "Intentos": "0",
@@ -548,12 +540,12 @@ function handleBase(input) {
     document.getElementById("base-rows").textContent = localData.length + " filas";
     
     renderPreview(localData);
-
-    toast("Subiendo base original a Drive…");
+    toast("Subiendo base original a Drive...");
+    
     if (scriptUrl) {
       const res = await apiPost({ action: "uploadBase", rows: localData });
       if (res.ok) {
-        toast("Base original guardada en Google Sheets ✓", "success");
+        toast("Base guardada con éxito ✓", "success");
         setTimeout(refreshData, 1000);
       }
     }
@@ -561,124 +553,58 @@ function handleBase(input) {
   reader.readAsText(file);
 }
 
-// ── 2. CARGA DE RESULTADOS OMNILEADS ─────────────────────────
 function handleResults(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async e => {
     const rows = parseCSV(e.target.result);
-    if (!rows.length) { toast("CSV vacío", "error"); return; }
-    if (!localData.length) { toast("Primero debés cargar la Base Original", "error"); return; }
+    if (!rows.length) return;
 
     document.getElementById("results-pill").style.display = "flex";
     document.getElementById("results-fname").textContent = file.name;
-    document.getElementById("results-rows").textContent = rows.length + " registros";
+    document.getElementById("results-rows").textContent = rows.length + " filas";
 
-    const resultMap = {};
-    rows.forEach(r => {
-      const keys = Object.keys(r);
-      const phoneKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || keys[2];
-      const calKey   = keys.find(k => k.toLowerCase().includes("calificac")) || "Calificación";
-      const conKey   = keys.find(k => k.toLowerCase().includes("contactac")) || "Contactación";
-      const intKey   = keys.find(k => k.toLowerCase().includes("intento"))   || "Intentos";
-
-      if (phoneKey) {
-        const pClean = normalizePhone(r[phoneKey]);
-        if (pClean) {
-          resultMap[pClean] = {
-            cal: r[calKey] || "",
-            con: r[conKey] || "",
-            int: r[intKey] !== undefined ? r[intKey] : ""
-          };
-        }
-      }
-    });
-
-    let matched = 0;
-    localData = localData.map(row => {
-      const pClean = normalizePhone(row["numero_de_telefono"]);
-      const match = resultMap[pClean];
-      if (match) {
-        matched++;
-        if (match.cal) row["Calificación"] = match.cal;
-        if (match.con) row["Contactación"] = match.con;
-        if (match.int !== "")  row["Intentos"] = match.int;
-      }
-      return row;
-    });
-
-    renderPreview(localData);
-
-    toast("Sincronizando resultados con Google Drive…");
+    toast("Unificando e indexando OmniLeads...");
     if (scriptUrl) {
       const res = await apiPost({ action: "mergeResults", rows: rows });
       if (res && res.ok) {
-        toast(`OmniLeads unificado: ${res.matched} leads actualizados ✓`, "success");
-        setTimeout(refreshData, 1200);
+        toast("Resultados guardados en Drive ✓", "success");
+        setTimeout(refreshData, 1000);
       }
     }
   };
   reader.readAsText(file);
 }
 
-// ── 3. CARGA DE BASE DE DESCARTES ────────────────────────────
 function handleDescartes(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async e => {
     const rows = parseCSV(e.target.result);
-    if (!rows.length) { toast("CSV vacío", "error"); return; }
-    if (!localData.length) { toast("Primero debés cargar la Base Original", "error"); return; }
+    if (!rows.length) return;
 
     document.getElementById("descartes-pill").style.display = "flex";
     document.getElementById("descartes-fname").textContent = file.name;
-    document.getElementById("descartes-rows").textContent = rows.length + " descartes";
+    document.getElementById("descartes-rows").textContent = rows.length + " filas";
 
-    const descarteMap = {};
-    rows.forEach(r => {
-      const keys = Object.keys(r);
-      const phoneKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || "Telefono";
-      const descKey  = keys.find(k => k.trim() === "Descarte") || keys.find(k => k.toLowerCase().includes("descarte")) || "Descarte";
-
-      const pClean = normalizePhone(r[phoneKey]);
-      if (pClean && r[descKey]) {
-        descarteMap[pClean] = r[descKey];
-      }
-    });
-
-    let matched = 0;
-    localData = localData.map(row => {
-      const pClean = normalizePhone(row["numero_de_telefono"]);
-      const motivo = descarteMap[pClean];
-      if (motivo) {
-        matched++;
-        row["Motivos de Descarte"] = motivo;
-      }
-      return row;
-    });
-
-    renderPreview(localData);
-
-    toast("Sincronizando motivos de descarte con Google Drive…");
+    toast("Cruzando motivos de descarte...");
     if (scriptUrl) {
       const res = await apiPost({ action: "mergeDescartes", rows: rows });
       if (res && res.ok) {
-        toast(`Descartes unificados: ${res.matched || matched} registros actualizados ✓`, "success");
-        setTimeout(refreshData, 1200);
+        toast("Descartes guardados en Drive ✓", "success");
+        setTimeout(refreshData, 1000);
       }
     }
   };
   reader.readAsText(file);
 }
 
-// ── VISTA PREVIA DE TABLA ─────────────────────────────────────
 function renderPreview(data) {
   if (!data || !data.length) return;
-  
-  const previewRows = data.slice(0, 5);
-  document.getElementById("preview-badge").textContent = data.length + " registros totales";
+  const previewRows = data.slice(0, 8);
+  document.getElementById("preview-badge").textContent = data.length + " registros";
 
   document.getElementById("preview-table").innerHTML =
     `<thead>
@@ -692,40 +618,27 @@ function renderPreview(data) {
       </tr>
     </thead>
     <tbody>` +
-    previewRows.map(r => {
-      const telValor = r["numero_de_telefono"] || "—";
-      const calif = r["Calificación"] || "—";
-      const contac = r["Contactación"] || "—";
-      const intentos = r["Intentos"] !== undefined ? r["Intentos"] : "0";
-      const descarte = r["Motivos de Descarte"] || "—";
-
-      return `<tr>
+    previewRows.map(r => `<tr>
         <td>${r["Nombre"] || "—"}</td>
-        <td>${telValor || "—"}</td>
-        <td><span class="badge ${calif !== '—' && calif !== '' ? 'badge-amber' : 'badge-gray'}">${calif}</span></td>
-        <td><span class="badge ${contac !== '—' && contac !== '' ? 'badge-blue' : 'badge-gray'}">${contac}</span></td>
-        <td>${intentos}</td>
-        <td><span style="color:var(--red-text); font-weight:600;">${descarte}</span></td>
-      </tr>`;
-    }).join("") +
-    `</tbody>`;
+        <td>${r["numero_de_telefono"] || "—"}</td>
+        <td><span class="badge ${r["Calificación"] !== '—' && r["Calificación"] !== '' ? 'badge-amber' : 'badge-gray'}">${r["Calificación"]}</span></td>
+        <td><span class="badge ${r["Contactación"] !== '—' && r["Contactación"] !== '' ? 'badge-blue' : 'badge-gray'}">${r["Contactación"]}</span></td>
+        <td>${r["Intentos"] || "0"}</td>
+        <td><span style="color:var(--red-text); font-weight:600;">${r["Motivos de Descarte"] || "—"}</span></td>
+      </tr>`).join("") + `</tbody>`;
 }
 
-// ── DASHBOARD METRICS ─────────────────────────────────────────
 function updateDashboard(stats) {
-  const { total, contactados, calificados, sinTrabajar, contactMap, calMap, carreraMap } = stats;
-  document.getElementById("m-total").textContent = total || 0;
-  document.getElementById("m-contactados").textContent = contactados || 0;
-  document.getElementById("m-contactados-pct").textContent = total ? Math.round(contactados/total*100) + "% del total" : "—";
-  document.getElementById("m-calificados").textContent = calificados || 0;
-  document.getElementById("m-calificados-pct").textContent = total ? Math.round(calificados/total*100) + "% calificados" : "—";
-  document.getElementById("m-sintrabajar").textContent = sinTrabajar || 0;
+  document.getElementById("m-total").textContent = stats.total || 0;
+  document.getElementById("m-contactados").textContent = stats.contactados || 0;
+  document.getElementById("m-contactados-pct").textContent = stats.total ? Math.round(stats.contactados/stats.total*100) + "% del total" : "—";
+  document.getElementById("m-calificados").textContent = stats.calificados || 0;
+  document.getElementById("m-calificados-pct").textContent = stats.total ? Math.round(stats.calificados/stats.total*100) + "% calificados" : "—";
+  document.getElementById("m-sintrabajar").textContent = stats.sinTrabajar || 0;
   
-  const contactFills = ["fill-teal","fill-blue","fill-amber","fill-gray","fill-red","fill-purple","fill-gray"];
-  renderBars("chart-contactacion", contactMap, contactFills);
-  const calFills = ["fill-amber","fill-red","fill-green","fill-gray","fill-blue"];
-  renderBars("chart-calificacion", calMap, calFills);
-  renderBars("chart-carreras", carreraMap, Array(20).fill("fill-teal"));
+  renderBars("chart-contactacion", stats.contactMap, ["fill-teal","fill-blue","fill-amber","fill-gray","fill-red"]);
+  renderBars("chart-calificacion", stats.calMap, ["fill-amber","fill-red","fill-green"]);
+  renderBars("chart-carreras", stats.carreraMap, Array(10).fill("fill-blue"));
 }
 
 function renderBars(containerId, map, fills) {
@@ -733,7 +646,7 @@ function renderBars(containerId, map, fills) {
     document.getElementById(containerId).innerHTML = `<div class="empty"><i class="ti ti-chart-pie"></i><p>Sin datos</p></div>`;
     return;
   }
-  const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,7);
+  const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const max = entries[0]?.[1] || 1;
   document.getElementById(containerId).innerHTML = entries.map(([k,v],i) =>
     `<div class="bar-row">
@@ -744,11 +657,9 @@ function renderBars(containerId, map, fills) {
   ).join("");
 }
 
-// ── FILTROS Y EXPORTACIÓN ─────────────────────────────────────
 function updateCarreraFilter() {
   const carreras = [...new Set(localData.map(r=>r["Carrera"]).filter(Boolean))].sort();
-  const sel = document.getElementById("f-carrera");
-  sel.innerHTML = `<option value="">Todas las carreras</option>` + carreras.map(c=>`<option value="${c}">${c}</option>`).join("");
+  document.getElementById("f-carrera").innerHTML = `<option value="">Todas las carreras</option>` + carreras.map(c=>`<option value="${c}">${c}</option>`).join("");
 }
 
 function getFiltered() {
@@ -758,89 +669,56 @@ function getFiltered() {
   const att = document.getElementById("f-intentos").value;
   return localData.filter(r => {
     if (car && r["Carrera"] !== car) return false;
-    const rCal = r["Calificación"] || "";
-    if (cal === "__vacio__" && (rCal && rCal !== "—")) return false;
-    if (cal && cal !== "__vacio__" && rCal !== cal) return false;
-    const rCon = r["Contactación"] || "";
-    if (con === "__vacio__" && (rCon && rCon !== "—")) return false;
-    if (con && con !== "__vacio__" && rCon !== con) return false;
+    if (cal === "__vacio__" && r["Calificación"] !== "—" && r["Calificación"] !== "") return false;
+    if (cal && cal !== "__vacio__" && r["Calificación"] !== cal) return false;
+    if (con === "__vacio__" && r["Contactación"] !== "—" && r["Contactación"] !== "") return false;
+    if (con && con !== "__vacio__" && r["Contactación"] !== con) return false;
     if (att !== "" && parseInt(r["Intentos"]||"0") > parseInt(att)) return false;
     return true;
   });
 }
 
 function applyFilters() {
-  if (!localData.length) return;
   const filtered = getFiltered();
   document.getElementById("filtered-badge").textContent = filtered.length + " leads";
   const ct = document.getElementById("campaign-table");
-  if (!filtered.length) { ct.innerHTML = `<div class="empty"><i class="ti ti-mood-empty"></i><p>Ningún lead con esos filtros</p></div>`; return; }
+  if (!filtered.length) { ct.innerHTML = `<div class="empty"><i class="ti ti-mood-empty"></i><p>Ningún lead encontrado</p></div>`; return; }
   
-  const show = filtered.slice(0, 100);
-  const headersPreview = ["Nombre", "Carrera", "Teléfono", "Calificación", "Contactación", "Intentos"];
-  
-  ct.innerHTML = `<table><thead><tr>${headersPreview.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>` +
-    show.map(r=>`<tr><td>${r["Nombre"]||"—"}</td><td>${r["Carrera"]||"—"}</td><td>${r["numero_de_telefono"]||"—"}</td><td>${badgeCal(r["Calificación"])}</td><td>${badgeCon(r["Contactación"])}</td><td>${r["Intentos"]||"0"}</td></tr>`).join("") +
-    `</tbody></table>` +
-    (filtered.length > 100 ? `<div style="padding:8px 1rem;font-size:12px;color:var(--text-tertiary);">Mostrando 100 de ${filtered.length} — exportá para obtener todos</div>` : "");
+  ct.innerHTML = `<table><thead><tr><th>Nombre</th><th>Carrera</th><th>Teléfono</th><th>Calificación</th><th>Contactación</th><th>Intentos</th></tr></thead><tbody>` +
+    filtered.slice(0, 50).map(r=>`<tr><td>${r["Nombre"]}</td><td>${r["Carrera"]}</td><td>${r["numero_de_telefono"]}</td><td><span class="badge badge-amber">${r["Calificación"]}</span></td><td><span class="badge badge-blue">${r["Contactación"]}</span></td><td>${r["Intentos"]}</td></tr>`).join("") +
+    `</tbody></table>`;
 }
 
-function badgeCon(v) {
-  if (!v || v === "—") return `<span class="badge badge-gray">—</span>`;
-  const m = { "Contactado":"badge-green", "Contestador":"badge-blue", "Cliente no atiende":"badge-amber", "Abandonada por cliente":"badge-red" };
-  return `<span class="badge ${m[v]||"badge-gray"}">${v}</span>`;
-}
-
-function badgeCal(v) {
-  if (!v || v === "—") return `<span class="badge badge-gray">—</span>`;
-  const m = { "DESCARTE":"badge-red", "BUZON":"badge-amber", "AGENDADO PARA SEGUIMIENTO":"badge-green" };
-  return `<span class="badge ${m[v]||"badge-gray"}">${v}</span>`;
-}
-
-async function exportCampaign() {
+function exportCampaign() {
   const filtered = getFiltered();
-  if (!filtered.length) { toast("No hay leads con esos filtros", "error"); return; }
+  if (!filtered.length) return;
   const name = document.getElementById("campaign-name").value.trim() || "CAMPAÑA_" + new Date().toISOString().slice(0,10);
-  
   const csvCols = ["Nombre", "Correo", "numero_de_telefono", "Numero_de_telefono_de_WhatsApp", "Carrera"];
   const csv = [csvCols.join(","), ...filtered.map(r => csvCols.map(c=>`"${r[c]||""}"`).join(","))].join("\n");
+  
   const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = name.replace(/\s+/g,"_") + ".csv"; a.click();
-  URL.revokeObjectURL(url);
   
   const entry = { name, leads: filtered.length, carrera: document.getElementById("f-carrera").value||"Todas", cal: document.getElementById("f-calificacion").value||"—", con: document.getElementById("f-contactacion").value||"—", intentos: document.getElementById("f-intentos").value||"—", date: new Date().toLocaleDateString("es-AR") };
   campaignHistory.unshift(entry);
   localStorage.setItem("cm_history", JSON.stringify(campaignHistory.slice(0, 50)));
   renderHistory();
   if (scriptUrl) apiPost({ action:"logCampaign", entry });
-  toast(`Campaña "${name}" exportada — ${filtered.length} leads ✓`, "success");
 }
 
 function renderHistory() {
   const list = document.getElementById("history-list");
-  if (!campaignHistory.length) { list.innerHTML = `<div class="empty"><i class="ti ti-clock"></i><p>Las campañas exportadas aparecerán acá</p></div>`; return; }
-  list.innerHTML = campaignHistory.map(h =>
-    `<div class="history-item">
-      <div class="history-icon"><i class="ti ti-file-export"></i></div>
-      <div class="history-info">
-        <h4>${h.name}</h4>
-        <p>${h.leads} leads · ${h.carrera} · Cal: ${h.cal} · Con: ${h.con} · Int: ${h.intentos}</p>
-      </div>
-      <div class="history-meta">
-        <span class="badge badge-green">${h.leads} leads</span>
-        <span style="font-size:11px;color:var(--text-tertiary);">${h.date}</span>
-      </div>
-    </div>`
-  ).join("");
+  if (!campaignHistory.length) return;
+  list.innerHTML = campaignHistory.map(h => `<div class="history-item"><div class="history-icon"><i class="ti ti-file-export"></i></div><div class="history-info"><h4>${h.name}</h4><p>${h.leads} leads · ${h.carrera} · Cal: ${h.cal}</p></div></div>`).join("");
 }
 
 function toast(msg, type="") {
   const wrap = document.getElementById("toast-wrap");
   const el = document.createElement("div");
   el.className = "toast" + (type ? " " + type : "");
-  el.innerHTML = `<i class="ti ti-${type==="error"?"alert-circle":type==="success"?"circle-check":"info-circle"}"></i> ${msg}`;
+  el.innerHTML = `<i class="ti ti-${type==="error"?"alert-circle":"circle-check"}"></i> ${msg}`;
   wrap.appendChild(el);
   setTimeout(() => el.remove(), 3500);
 }
