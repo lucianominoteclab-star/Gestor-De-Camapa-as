@@ -173,6 +173,11 @@ tr:hover td { background: var(--bg-secondary); }
 .history-info { flex: 1; min-width: 0; }
 .history-info h4 { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
 .history-info p { font-size: 12px; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Estilos de Alertas y Auditoría */
+.audit-alert-card { background: var(--red-bg); color: var(--red-text); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1rem; }
+.audit-alert-icon { font-size: 28px; }
+.audit-grid-2x1 { display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; margin-bottom: 1rem; }
 </style>
 </head>
 <body>
@@ -189,6 +194,9 @@ tr:hover td { background: var(--bg-secondary); }
     <nav>
       <div class="nav-item active" data-page="dashboard">
         <i class="ti ti-chart-bar"></i> Dashboard
+      </div>
+      <div class="nav-item" data-page="auditoria">
+        <i class="ti ti-users"></i> Auditoría
       </div>
       <div class="nav-item" data-page="datos">
         <i class="ti ti-upload"></i> Cargar datos
@@ -273,6 +281,50 @@ tr:hover td { background: var(--bg-secondary); }
         </div>
       </div>
 
+      <!-- AUDITORÍA (NUEVA PESTAÑA) -->
+      <div id="page-auditoria" class="page">
+        <div id="audit-alert-box" class="audit-alert-card" style="display:none;">
+          <div class="audit-alert-icon"><i class="ti ti-alert-triangle"></i></div>
+          <div>
+            <strong style="font-size:14px;">Atención Coordinación (Luciano & Camila)</strong>
+            <p style="font-size:12px; margin-top:2px;">Hay <span id="audit-alert-count" style="font-weight:bold;">0</span> leads en bucle de marcado crítico (+3 intentos fallidos). Se sugiere pausar este lote o cambiarlo de base en OmniLeads para no quemar el discador.</p>
+          </div>
+        </div>
+
+        <div class="audit-grid-2x1">
+          <div class="card">
+            <div class="card-title">📉 Fuga del Pipeline Real</div>
+            <div id="audit-fuga-bars" style="display:flex; flex-direction:column; gap:15px; padding-top:10px;">
+              <div class="empty"><i class="ti ti-chart-arrows"></i><p>Sin datos cruzados</p></div>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <div class="table-header">
+              <h3>Rendimiento y Calidad por Advisor</h3>
+              <span class="badge badge-blue">Métricas directas de OmniLeads</span>
+            </div>
+            <table id="audit-agent-table">
+              <thead>
+                <tr>
+                  <th>Advisor / Agente</th>
+                  <th>Total Gestión</th>
+                  <th>Contactos Efectivos</th>
+                  <th>Calificados (En Seguimiento)</th>
+                  <th>Descartes</th>
+                  <th>% Efectividad Comercial</th>
+                </tr>
+              </thead>
+              <tbody id="audit-agent-body">
+                <tr>
+                  <td colspan="6" class="empty"><i class="ti ti-users"></i><p>Subí un reporte de descartes o resultados para auditar asesores.</p></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- DATOS -->
       <div id="page-datos" class="page">
         <div class="upload-grid">
@@ -317,7 +369,7 @@ tr:hover td { background: var(--bg-secondary); }
             <div id="descartes-pill" style="display:none" class="file-pill">
               <i class="ti ti-circle-check"></i>
               <span class="fname" id="descartes-fname">—</span>
-              <small id="descartes-rows">—</small>
+              <small id="results-rows">—</small>
             </div>
           </div>
         </div>
@@ -431,7 +483,7 @@ function showPage(page) {
   document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
   document.getElementById("page-" + page).classList.add("active");
   document.querySelector(`[data-page="${page}"]`).classList.add("active");
-  const titles = { dashboard:"Dashboard", datos:"Cargar datos", campana:"Armar campaña", historial:"Historial" };
+  const titles = { dashboard:"Dashboard", auditoria:"Auditoría de Control", datos:"Cargar datos", campana:"Armar campaña", historial:"Historial" };
   document.getElementById("page-title").textContent = titles[page];
   if (page === "campana" && localData.length) applyFilters();
 }
@@ -486,6 +538,7 @@ async function refreshData() {
     const res = await apiFetch("getStats");
     if (res.error) return;
     updateDashboard(res);
+    updateAuditoriaTabs(res);
     document.getElementById("db-info").textContent = res.total + " leads en Drive";
     
     const baseRes = await apiFetch("getBase");
@@ -693,6 +746,70 @@ function updateDashboard(stats) {
   renderBars("chart-calificacion", stats.calMap, ["fill-amber","fill-red","fill-green"]);
   renderBars("chart-carreras", stats.carreraMap, Array(10).fill("fill-blue"));
   renderBars("chart-descartes", stats.descarteMap, Array(5).fill("fill-red"));
+}
+
+// NUEVO: Renderizador específico para la pestaña de Auditoría (Luciano & Camila)
+function updateAuditoriaTabs(stats) {
+  // 1. Control de caja de alertas
+  const alertBox = document.getElementById("audit-alert-box");
+  if (stats.leadsEnBucle > 0) {
+    alertBox.style.display = "flex";
+    document.getElementById("audit-alert-count").textContent = stats.leadsEnBucle;
+  } else {
+    alertBox.style.display = "none";
+  }
+
+  // 2. Gráfico de deserción / Fuga real
+  const total = stats.total || 1;
+  const contactados = stats.contactados || 0;
+  const calificados = stats.calificados || 0;
+  
+  const pctFugaContactados = Math.round(((total - contactados) / total) * 100);
+  const pctFugaComercial = contactados > 0 ? Math.round(((contactados - calificados) / contactados) * 100) : 0;
+
+  document.getElementById("audit-fuga-bars").innerHTML = `
+    <div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+        <span>Fuga en Marcación (Leads no contactados)</span>
+        <span style="color:var(--red-text); font-weight:bold;">${pctFugaContactados}% de deserción</span>
+      </div>
+      <div style="background:var(--bg-secondary); border-radius:4px; height:8px; width:100%;">
+        <div class="fill-red" style="height:100%; border-radius:4px; width:${pctFugaContactados}%;"></div>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+        <span>Fuga Comercial (Contactados que cayeron / descartes)</span>
+        <span style="color:var(--amber-text); font-weight:bold;">${pctFugaComercial}% no cerrados</span>
+      </div>
+      <div style="background:var(--bg-secondary); border-radius:4px; height:8px; width:100%;">
+        <div class="fill-amber" style="height:100%; border-radius:4px; width:${pctFugaComercial}%;"></div>
+      </div>
+    </div>
+  `;
+
+  // 3. Tabla de Advisors Dinámica
+  const tbody = document.getElementById("audit-agent-body");
+  if (!stats.agentMap || !Object.keys(stats.agentMap).length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty"><i class="ti ti-users"></i><p>Sin reportes vinculados a agentes en esta base.</p></td></tr>`;
+    return;
+  }
+
+  let htmlRows = "";
+  Object.entries(stats.agentMap).forEach(([agentName, data]) => {
+    const efPct = data.efectivos > 0 ? Math.round((data.calificados / data.efectivos) * 100) : 0;
+    htmlRows += `
+      <tr>
+        <td style="font-weight:500;"><i class="ti ti-user" style="font-size:14px; vertical-align:middle; margin-right:4px; color:var(--text-secondary);"></i>${agentName}</td>
+        <td><span class="badge badge-gray">${data.totalGestionado}</span></td>
+        <td><span class="badge badge-blue">${data.efectivos}</span></td>
+        <td><span class="badge badge-green">${data.calificados}</span></td>
+        <td><span class="badge badge-red">${data.descartes}</span></td>
+        <td style="font-weight:bold; color: ${efPct >= 40 ? 'var(--green)' : 'var(--text)'}">${efPct}% de efectividad</td>
+      </tr>
+    `;
+  });
+  tbody.innerHTML = htmlRows;
 }
 
 function renderBars(containerId, map, fills) {
