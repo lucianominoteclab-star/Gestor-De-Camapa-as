@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gestor de Campañas -CENEDUDES-</title>
+<title>Campaign Manager · Discador</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -173,7 +173,6 @@ tr:hover td { background: var(--bg-secondary); }
 .history-info { flex: 1; min-width: 0; }
 .history-info h4 { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
 .history-info p { font-size: 12px; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.history-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -181,7 +180,7 @@ tr:hover td { background: var(--bg-secondary); }
 <div class="app">
   <div class="sidebar">
     <div class="sidebar-header">
-      <h1>Gestor de Campañas -CENEDUDES-</h1>
+      <h1>Campaign Manager</h1>
       <p style="margin-top:6px;">
         <span class="conn-dot" id="conn-dot"></span>
         <span id="conn-label">Sin conectar</span>
@@ -222,15 +221,16 @@ tr:hover td { background: var(--bg-secondary); }
     </div>
 
     <div class="content">
+      <!-- DASHBOARD -->
       <div id="page-dashboard" class="page active">
         <div class="metric-grid">
           <div class="metric-card">
             <div class="metric-label">Total leads</div>
             <div class="metric-value" id="m-total">—</div>
-            <div class="metric-sub">en base activa</div>
+            <div class="metric-sub">en base histórica</div>
           </div>
           <div class="metric-card">
-            <div class="metric-label">Contactados</div>
+            <div class="metric-label">Contactación Efectiva</div>
             <div class="metric-value c-green" id="m-contactados">—</div>
             <div class="metric-sub" id="m-contactados-pct">—</div>
           </div>
@@ -239,28 +239,41 @@ tr:hover td { background: var(--bg-secondary); }
             <div class="metric-value c-amber" id="m-calificados">—</div>
             <div class="metric-sub" id="m-calificados-pct">—</div>
           </div>
-          <div class="metric-card">
-            <div class="metric-label">Sin trabajar</div>
-            <div class="metric-value c-red" id="m-sintrabajar">—</div>
-            <div class="metric-sub">0 intentos</div>
+          <div class="metric-card" style="border-left:3px solid var(--red);">
+            <div class="metric-label">Leads en Bucle (+3 Int)</div>
+            <div class="metric-value c-red" id="m-bucle">—</div>
+            <div class="metric-sub" style="color:var(--red-text); font-weight:500;">⚠️ Revisar o Pausar</div>
           </div>
         </div>
+
+        <div class="charts-row" style="grid-template-columns: 1fr 1fr; margin-bottom:1rem;">
+          <div class="card">
+            <div class="card-title">📊 Embudo de Conversión (Pipeline)</div>
+            <div id="chart-funnel" style="display:flex; flex-direction:column; gap:12px; padding:10px 0;"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">🛑 Top Motivos de Descarte</div>
+            <div id="chart-descartes"><div class="empty"><i class="ti ti-barrier-block"></i><p>Sin descartes procesados</p></div></div>
+          </div>
+        </div>
+
         <div class="charts-row">
           <div class="card">
-            <div class="card-title">Contactación</div>
+            <div class="card-title">Contactación Detallada</div>
             <div id="chart-contactacion"><div class="empty"><i class="ti ti-phone-off"></i><p>Cargá datos</p></div></div>
           </div>
           <div class="card">
-            <div class="card-title">Calificación</div>
+            <div class="card-title">Calificación Detallada</div>
             <div id="chart-calificacion"><div class="empty"><i class="ti ti-tag"></i><p>Cargá datos</p></div></div>
           </div>
         </div>
-        <div class="card">
+        <div class="card" style="margin-top:1rem;">
           <div class="card-title">Leads por carrera</div>
           <div id="chart-carreras"><div class="empty"><i class="ti ti-school"></i><p>Cargá datos</p></div></div>
         </div>
       </div>
 
+      <!-- DATOS -->
       <div id="page-datos" class="page">
         <div class="upload-grid">
           <div class="card">
@@ -320,6 +333,7 @@ tr:hover td { background: var(--bg-secondary); }
         </div>
       </div>
 
+      <!-- CAMPAÑA -->
       <div id="page-campana" class="page">
         <div class="filter-card">
           <div class="filter-grid">
@@ -386,6 +400,7 @@ tr:hover td { background: var(--bg-secondary); }
         </div>
       </div>
 
+      <!-- HISTORIAL -->
       <div id="page-historial" class="page">
         <div id="history-list">
           <div class="empty"><i class="ti ti-clock"></i><p>Las campañas exportadas aparecerán acá</p></div>
@@ -540,15 +555,13 @@ function handleBase(input) {
     document.getElementById("base-rows").textContent = localData.length + " filas";
     
     renderPreview(localData);
-    toast("Subiendo base original a Drive...");
+    toast("Subiendo y cruzando base histórica...");
     
-  if (scriptUrl) {
+    if (scriptUrl) {
       const res = await apiPost({ action: "uploadBase", rows: localData });
       if (res.ok) {
-        toast(`Base procesada: +${res.added} nuevos | ✓ ${res.updated} actualizados`, "success");
+        toast(`Base: +${res.added} nuevos | ✓ ${res.updated} actualizados`, "success");
         setTimeout(refreshData, 1000);
-      } else {
-        toast("Error al subir los datos a Drive", "error");
       }
     }
   };
@@ -636,11 +649,50 @@ function updateDashboard(stats) {
   document.getElementById("m-contactados-pct").textContent = stats.total ? Math.round(stats.contactados/stats.total*100) + "% del total" : "—";
   document.getElementById("m-calificados").textContent = stats.calificados || 0;
   document.getElementById("m-calificados-pct").textContent = stats.total ? Math.round(stats.calificados/stats.total*100) + "% calificados" : "—";
-  document.getElementById("m-sintrabajar").textContent = stats.sinTrabajar || 0;
+  document.getElementById("m-bucle").textContent = stats.leadsEnBucle || 0;
   
+  // Render de Embudo Proporcional Histórico
+  const total = stats.total || 1;
+  const contactados = stats.contactados || 0;
+  const calificados = stats.calificados || 0;
+  
+  const pctContactados = Math.round((contactados / total) * 100);
+  const pctCalificados = Math.round((calificados / total) * 100);
+  
+  document.getElementById("chart-funnel").innerHTML = `
+    <div style="margin-bottom: 4px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+        <span><strong>1. Base Cargada Total</strong></span>
+        <span>${total} (100%)</span>
+      </div>
+      <div style="background:var(--bg-secondary); border-radius:4px; height:18px; width:100%;">
+        <div class="fill-blue" style="height:100%; border-radius:4px; width:100%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;">100%</div>
+      </div>
+    </div>
+    <div style="margin-bottom: 4px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+        <span><strong>2. Contactación Efectiva</strong></span>
+        <span>${contactados} (${pctContactados}%)</span>
+      </div>
+      <div style="background:var(--bg-secondary); border-radius:4px; height:18px; width:100%;">
+        <div class="fill-green" style="height:100%; border-radius:4px; width:${pctContactados}%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;">${pctContactados}%</div>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+        <span><strong>3. Alumnos Avanzados / Calificados</strong></span>
+        <span>${calificados} (${pctCalificados}%)</span>
+      </div>
+      <div style="background:var(--bg-secondary); border-radius:4px; height:18px; width:100%;">
+        <div class="fill-amber" style="height:100%; border-radius:4px; width:${pctCalificados}%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;">${pctCalificados}%</div>
+      </div>
+    </div>
+  `;
+
   renderBars("chart-contactacion", stats.contactMap, ["fill-teal","fill-blue","fill-amber","fill-gray","fill-red"]);
   renderBars("chart-calificacion", stats.calMap, ["fill-amber","fill-red","fill-green"]);
   renderBars("chart-carreras", stats.carreraMap, Array(10).fill("fill-blue"));
+  renderBars("chart-descartes", stats.descarteMap, Array(5).fill("fill-red"));
 }
 
 function renderBars(containerId, map, fills) {
