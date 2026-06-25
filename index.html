@@ -25,713 +25,873 @@
   --red: #A32D2D;
   --red-bg: #FCEBEB;
   --red-text: #A32D2D;
-  --blue: #2B6CB0;
-  --blue-bg: #EBF8FF;
-  --blue-text: #2B6CB0;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --blue-bg: #E6F1FB;
+  --blue-text: #185FA5;
+  --radius: 8px;
+  --radius-lg: 12px;
 }
-body { font-family: var(--font); bg: var(--bg); color: var(--text); background-color: var(--bg); line-height: 1.4; padding: 24px; }
-.app-container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 280px 1fr; gap: 24px; min-height: calc(100vh - 48px); }
-aside { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; display: flex; flex-direction: column; gap: 24px; }
-.logo-area { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; letter-spacing: -0.5px; }
-.logo-area i { color: var(--green); font-size: 1.4rem; }
-.nav-group { display: flex; flex-direction: column; gap: 4px; }
-.nav-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); font-weight: 600; letter-spacing: 0.5px; margin-bottom: 6px; padding-left: 8px; }
-.nav-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: none; background: transparent; color: var(--text-secondary); border-radius: var(--radius-sm); cursor: pointer; text-align: left; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; width: 100%; }
-.nav-btn:hover { background: var(--bg-secondary); color: var(--text); }
-.nav-btn.active { background: var(--green-bg); color: var(--green-text); }
-main { display: flex; flex-direction: column; gap: 24px; }
-.view-panel { display: none; flex-direction: column; gap: 24px; }
-.view-panel.active { display: flex; }
-.top-header { display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 24px; }
-.header-title h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.5px; }
-.header-title p { font-size: 0.85rem; color: var(--text-secondary); }
-.action-row { display: flex; align-items: center; gap: 12px; }
-.btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 0.85rem; font-weight: 600; border-radius: var(--radius-sm); border: 1px solid var(--border-md); background: var(--bg-surface); cursor: pointer; transition: all 0.15s; color: var(--text); }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1a;
+    --bg-surface: #242422;
+    --bg-secondary: #2e2e2b;
+    --text: #e8e8e4;
+    --text-secondary: #a8a8a4;
+    --text-tertiary: #68685f;
+    --border: rgba(255,255,255,0.08);
+    --border-md: rgba(255,255,255,0.15);
+    --green-bg: #04342C;
+    --green-text: #9FE1CB;
+    --amber-bg: #412402;
+    --amber-text: #FAC775;
+    --red-bg: #501313;
+    --red-text: #F7C1C1;
+    --blue-bg: #042C53;
+    --blue-text: #B5D4F4;
+  }
+}
+
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); font-size: 14px; height: 100vh; overflow: hidden; }
+.app { display: flex; height: 100vh; }
+
+/* Sidebar */
+.sidebar { width: 210px; min-width: 210px; background: var(--bg-surface); border-right: 0.5px solid var(--border); display: flex; flex-direction: column; }
+.sidebar-header { padding: 1.25rem 1rem 1rem; border-bottom: 0.5px solid var(--border); }
+.sidebar-header h1 { font-size: 14px; font-weight: 500; }
+.sidebar-header p { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+.sidebar-header .conn-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #ccc; margin-right: 4px; vertical-align: middle; }
+.sidebar-header .conn-dot.connected { background: var(--green); }
+nav { padding: 0.5rem 0; flex: 1; }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 9px 1rem; font-size: 13px; color: var(--text-secondary); cursor: pointer; transition: background 0.1s; border-left: 2px solid transparent; }
+.nav-item:hover { background: var(--bg-secondary); color: var(--text); }
+.nav-item.active { background: var(--bg-secondary); color: var(--text); font-weight: 500; border-left-color: var(--green); }
+.nav-item i { font-size: 17px; }
+.sidebar-footer { padding: 1rem; border-top: 0.5px solid var(--border); }
+.sidebar-footer p { font-size: 11px; color: var(--text-tertiary); }
+#script-url-input { width: 100%; font-size: 11px; padding: 5px 7px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--bg-secondary); color: var(--text); margin-top: 4px; }
+
+/* Main */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { background: var(--bg-surface); border-bottom: 0.5px solid var(--border); padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.topbar h2 { font-size: 15px; font-weight: 500; }
+.topbar-meta { font-size: 12px; color: var(--text-tertiary); display: flex; align-items: center; gap: 12px; }
+.content { flex: 1; overflow-y: auto; padding: 1.25rem 1.5rem; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* Botones */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px; border: 0.5px solid var(--border-md); border-radius: var(--radius); cursor: pointer; background: var(--bg-surface); color: var(--text); font-family: inherit; transition: background 0.12s; }
 .btn:hover { background: var(--bg-secondary); }
-.btn-primary { background: var(--text); color: var(--bg-surface); border-color: var(--text); }
-.btn-primary:hover { background: #333; }
-.stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
-.stat-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 8px; position: relative; overflow: hidden; }
-.stat-card .icon { position: absolute; right: 16px; top: 16px; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-.stat-card .label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; }
-.stat-card .val { font-size: 1.8rem; font-weight: 700; letter-spacing: -1px; line-height: 1.1; }
-.stat-card .desc { font-size: 0.75rem; color: var(--text-tertiary); }
-.stat-card.c-total .icon { background: var(--bg-secondary); color: var(--text); }
-.stat-card.c-cont .icon { background: var(--green-bg); color: var(--green-text); }
-.stat-card.c-cal .icon { background: var(--blue-bg); color: var(--blue-text); }
-.stat-card.c-st .icon { background: var(--amber-bg); color: var(--amber-text); }
-.stat-card.c-bucle .icon { background: var(--red-bg); color: var(--red-text); }
-.dashboard-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-.dashboard-row-3 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-.card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; display: flex; flex-direction: column; gap: 16px; }
-.card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
-.card-header h3 { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-.chart-container { position: relative; height: 260px; width: 100%; display: flex; align-items: center; justify-content: center; }
-.empty-chart-text { color: var(--text-tertiary); font-size: 0.85rem; font-style: italic; }
-.grid-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
-.grid-table th { font-weight: 600; color: var(--text-secondary); padding: 10px 12px; border-bottom: 1px solid var(--border-md); background: var(--bg-secondary); }
-.grid-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
-.grid-table tr:hover td { background: rgba(0,0,0,0.01); }
-.badge { display: inline-flex; align-items: center; padding: 2px 8px; font-size: 0.75rem; font-weight: 600; border-radius: 4px; }
-.badge-green { background: var(--green-bg); color: var(--green-text); }
-.badge-amber { background: var(--amber-bg); color: var(--amber-text); }
-.badge-red { background: var(--red-bg); color: var(--red-text); }
-.badge-secondary { background: var(--bg-secondary); color: var(--text-secondary); }
-.input-field { width: 100%; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-md); font-family: var(--font); font-size: 0.9rem; outline: none; background: var(--bg-surface); }
-.input-field:focus { border-color: var(--text); }
-.form-group { display: flex; flex-direction: column; gap: 6px; }
-.form-group label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
-.form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-.file-upload-box { border: 2px dashed var(--border-md); border-radius: var(--radius); padding: 32px; text-align: center; cursor: pointer; transition: all 0.15s; background: var(--bg-surface); display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.file-upload-box:hover { border-color: var(--text); background: var(--bg-secondary); }
-.file-upload-box i { font-size: 2rem; color: var(--text-secondary); }
-.file-upload-box h4 { font-size: 0.95rem; font-weight: 600; }
-.file-upload-box p { font-size: 0.8rem; color: var(--text-tertiary); }
-.file-upload-box input { display: none; }
-#toast-wrap { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 9999; }
-.toast { padding: 12px 20px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; color: #fff; background: #1a1a19; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px; animation: slideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
-.toast.green { background: var(--green); }
-.toast.red { background: var(--red); }
-.toast.amber { background: var(--amber); }
-@keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-.loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(245,245,243,0.7); backdrop-filter: blur(2px); z-index: 99999; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 12px; }
-.loading-overlay.active { display: flex; }
-.spinner { width: 32px; height: 32px; border: 3px solid var(--border-md); border-top-color: var(--text); border-radius: 50%; animation: spin 0.6s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.history-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; padding-right: 4px; }
-.history-item { display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-surface); }
-.history-icon { width: 32px; height: 32px; border-radius: var(--radius-sm); background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; color: var(--text-secondary); }
-.history-info h4 { font-size: 0.85rem; font-weight: 600; }
-.history-info p { font-size: 0.75rem; color: var(--text-tertiary); }
-.config-status { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; padding: 6px 12px; border-radius: var(--radius-sm); background: var(--bg-secondary); }
-.config-status.connected i { color: var(--green); }
-.config-status.disconnected i { color: var(--red); }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--green); color: white; border-color: var(--green); }
+.btn-primary:hover { background: var(--green-text); border-color: var(--green-text); }
+.btn i { font-size: 15px; }
+.btn-sm { padding: 4px 9px; font-size: 12px; }
+
+/* Métricas */
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+.metric-card { background: var(--bg-secondary); border-radius: var(--radius); padding: 0.875rem 1rem; }
+.metric-label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+.metric-value { font-size: 26px; font-weight: 500; line-height: 1; }
+.metric-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+.c-green { color: var(--green); }
+.c-amber { color: var(--amber); }
+.c-red { color: var(--red); }
+
+/* Charts */
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.card { background: var(--bg-surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+.card-title { font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.875rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.bar-label { font-size: 12px; color: var(--text-secondary); width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.bar-track { flex: 1; background: var(--bg-secondary); border-radius: 3px; height: 5px; }
+.bar-fill { height: 5px; border-radius: 3px; transition: width 0.4s ease; }
+.bar-count { font-size: 11px; color: var(--text-tertiary); min-width: 28px; text-align: right; }
+.fill-green  { background: #1D9E75; }
+.fill-amber  { background: #EF9F27; }
+.fill-red    { background: #E24B4A; }
+.fill-blue   { background: #378ADD; }
+.fill-purple { background: #7F77DD; }
+.fill-gray   { background: #888780; }
+.fill-teal   { background: #5DCAA5; }
+
+/* Upload */
+.upload-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem; }
+.drop-zone { border: 1px dashed var(--border-md); border-radius: var(--radius); padding: 1.5rem 1rem; text-align: center; cursor: pointer; transition: background 0.12s; }
+.drop-zone:hover { background: var(--bg-secondary); }
+.drop-zone i { font-size: 26px; color: var(--text-tertiary); display: block; margin-bottom: 6px; }
+.drop-zone p { font-size: 12px; color: var(--text-secondary); }
+.drop-zone input[type=file] { display: none; }
+.file-pill { display: flex; align-items: center; gap: 7px; background: var(--bg-secondary); border-radius: var(--radius); padding: 8px 10px; margin-top: 8px; font-size: 12px; }
+.file-pill i { font-size: 15px; color: var(--green); }
+.file-pill .fname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-pill small { color: var(--text-tertiary); font-size: 11px; white-space: nowrap; }
+
+/* Toast */
+.toast-wrap { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; flex-direction: column; gap: 8px; z-index: 999; pointer-events: none; }
+.toast { background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: var(--radius); font-size: 13px; display: flex; align-items: center; gap: 8px; max-width: 320px; animation: slideIn 0.2s ease; }
+.toast.error { background: var(--red); color: white; }
+.toast.success { background: var(--green); color: white; }
+@keyframes slideIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+
+/* Badges */
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 99px; font-size: 11px; white-space: nowrap; }
+.badge-green  { background: var(--green-bg);  color: var(--green-text); }
+.badge-amber  { background: var(--amber-bg);  color: var(--amber-text); }
+.badge-red    { background: var(--red-bg);    color: var(--red-text); }
+.badge-blue   { background: var(--blue-bg);   color: var(--blue-text); }
+.badge-gray   { background: var(--bg-secondary); color: var(--text-secondary); }
+
+/* Tabla */
+.table-wrap { background: var(--bg-surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.table-header { padding: 0.75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid var(--border); }
+.table-header h3 { font-size: 13px; font-weight: 500; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { padding: 7px 1rem; text-align: left; font-size: 11px; font-weight: 500; color: var(--text-tertiary); background: var(--bg-secondary); border-bottom: 0.5px solid var(--border); white-space: nowrap; }
+td { padding: 7px 1rem; border-bottom: 0.5px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg-secondary); }
+
+/* Filtros campaña */
+.filter-card { background: var(--bg-surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+.filter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.875rem; }
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+.filter-group select, .filter-group input[type=text] { font-size: 13px; padding: 6px 8px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--bg-secondary); color: var(--text); font-family: inherit; }
+.filter-divider { height: 0.5px; background: var(--border); margin: 1rem 0; }
+.filter-actions { display: flex; align-items: center; justify-content: space-between; }
+
+/* Empty state */
+.empty { text-align: center; padding: 3rem 1rem; color: var(--text-tertiary); }
+.empty i { font-size: 32px; display: block; margin-bottom: 8px; }
+.empty p { font-size: 13px; }
+
+/* Historial */
+.history-item { background: var(--bg-surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 0.875rem 1.25rem; display: flex; align-items: center; gap: 1rem; margin-bottom: 8px; }
+.history-icon { width: 34px; height: 34px; border-radius: var(--radius); background: var(--green-bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.history-icon i { font-size: 17px; color: var(--green-text); }
+.history-info { flex: 1; min-width: 0; }
+.history-info h4 { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.history-info p { font-size: 12px; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Estilos de Alertas y Auditoría */
+.audit-alert-card { background: var(--red-bg); color: var(--red-text); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1rem; }
+.audit-alert-icon { font-size: 28px; }
+.audit-grid-2x1 { display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; margin-bottom: 1rem; }
 </style>
 </head>
 <body>
 
-<div class="loading-overlay" id="loading">
-  <div class="spinner"></div>
-  <p style="font-size:0.85rem; font-weight:600;">Procesando operación comercial...</p>
-</div>
-
-<div id="toast-wrap"></div>
-
-<div class="app-container">
-  <aside>
-    <div class="logo-area">
-      <i class="ti ti-adjustments-alt"></i>
-      <span>Campaign Manager</span>
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h1>Campaign Manager</h1>
+      <p style="margin-top:6px;">
+        <span class="conn-dot" id="conn-dot"></span>
+        <span id="conn-label">Sin conectar</span>
+      </p>
     </div>
-    <div class="nav-group">
-      <div class="nav-label">Operaciones</div>
-      <button class="nav-btn active" onclick="switchView('dashboard')"><i class="ti ti-dashboard"></i>Dashboard General</button>
-      <button class="nav-btn" onclick="switchView('generator')"><i class="ti ti-file-export"></i>Segmentador Discador</button>
-      <button class="nav-btn" onclick="switchView('importer')"><i class="ti ti-database-import"></i>Importar OmniLeads</button>
-      <button class="nav-btn" onclick="switchView('config')"><i class="ti ti-settings"></i>Configuración API</button>
+    <nav>
+      <div class="nav-item active" data-page="dashboard">
+        <i class="ti ti-chart-bar"></i> Dashboard
+      </div>
+      <div class="nav-item" data-page="auditoria">
+        <i class="ti ti-users"></i> Auditoría
+      </div>
+      <div class="nav-item" data-page="datos">
+        <i class="ti ti-upload"></i> Cargar datos
+      </div>
+      <div class="nav-item" data-page="campana">
+        <i class="ti ti-filter"></i> Armar campaña
+      </div>
+      <div class="nav-item" data-page="historial">
+        <i class="ti ti-clock"></i> Historial
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <p>URL del Apps Script</p>
+      <input type="text" id="script-url-input" placeholder="Pegá tu Web App URL acá" oninput="saveScriptUrl(this.value)">
+      <button class="btn btn-sm" style="margin-top:6px; width:100%;" onclick="testConnection()">
+        <i class="ti ti-plug"></i> Conectar
+      </button>
     </div>
-    <div style="margin-top:auto; display:flex; flex-direction:column; gap:8px;">
-      <div class="config-status disconnected" id="side-status">
-        <i class="ti ti-circle-filled"></i> <span id="side-status-text">Sin conexión a Sheets</span>
-      </div>
-    </div>
-  </aside>
+  </div>
 
-  <main>
-    <div class="view-panel active" id="view-dashboard">
-      <div class="top-header">
-        <div class="header-title">
-          <h2>Dashboard Comercial Activo</h2>
-          <p>Métricas consolidadas de la hoja productiva en Google Sheets</p>
-        </div>
-        <div class="action-row">
-          <button class="btn" onclick="fetchStats()"><i class="ti ti-refresh"></i>Sincronizar Panel</button>
-        </div>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat-card c-total">
-          <div class="icon"><i class="ti ti-database"></i></div>
-          <div class="label">Total Base</div>
-          <div class="val" id="st-total">0</div>
-          <div class="desc">Leads cargados netos</div>
-        </div>
-        <div class="stat-card c-cont">
-          <div class="icon"><i class="ti ti-phone-call"></i></div>
-          <div class="label">Contactación</div>
-          <div class="val" id="st-contactados">0</div>
-          <div class="desc" id="st-pct-cont">0% del total general</div>
-        </div>
-        <div class="stat-card c-cal">
-          <div class="icon"><i class="ti ti-circle-check"></i></div>
-          <div class="label">Calificados</div>
-          <div class="val" id="st-calificados">0</div>
-          <div class="desc" id="st-pct-cal">0% de efectividad</div>
-        </div>
-        <div class="stat-card c-st">
-          <div class="icon"><i class="ti ti-clock"></i></div>
-          <div class="label">Sin Trabajar</div>
-          <div class="val" id="st-sinTrabajar">0</div>
-          <div class="desc">Leads con 0 intentos</div>
-        </div>
-        <div class="stat-card c-bucle">
-          <div class="icon"><i class="ti ti-alert-triangle"></i></div>
-          <div class="label">Fuga Discador</div>
-          <div class="val" id="st-leadsEnBucle">0</div>
-          <div class="desc">Leads con +3 desvíos</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <h3><i class="ti ti-users"></i> Rendimiento y Calidad por Advisor (Agente)</h3>
-        </div>
-        <div style="overflow-x: auto;">
-          <table class="grid-table" id="table-advisors">
-            <thead>
-              <tr>
-                <th>Nombre del Advisor / Asesor</th>
-                <th>Total Gestionado</th>
-                <th>Contactación Efectiva</th>
-                <th>Neto Calificados</th>
-                <th>Descartes Asignados</th>
-                <th>Conversión Comercial</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td colspan="6" style="text-align:center; color:var(--text-tertiary); font-style:italic;">No hay datos de gestión mapeados. Sincronizá el panel o unificá bases de OmniLeads.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="dashboard-row-2">
-        <div class="card">
-          <div class="card-header"><h3><i class="ti ti-chart-pie"></i> Distribución de Contactación</h3></div>
-          <div class="chart-container" id="chart-contact">
-            <span class="empty-chart-text">Cargando visualización gráfica...</span>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h3><i class="ti ti-chart-bar"></i> Distribución de Calificación</h3></div>
-          <div class="chart-container" id="chart-cal">
-            <span class="empty-chart-text">Cargando visualización gráfica...</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="dashboard-row-3">
-        <div class="card">
-          <div class="card-header"><h3><i class="ti ti-school"></i> Penetración por Carreras</h3></div>
-          <div style="max-height: 280px; overflow-y: auto;">
-            <table class="grid-table" id="table-carreras">
-              <thead><tr><th>Carrera</th><th>Volumen</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h3><i class="ti ti-trash-x"></i> Análisis de Motivos de Descarte</h3></div>
-          <div style="max-height: 280px; overflow-y: auto;">
-            <table class="grid-table" id="table-descartes">
-              <thead><tr><th>Motivo Identificado</th><th>Volumen Absoluto</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
+  <div class="main">
+    <div class="topbar">
+      <h2 id="page-title">Dashboard</h2>
+      <div class="topbar-meta">
+        <span id="db-info">Sin base cargada</span>
+        <button class="btn btn-sm" onclick="refreshData()" title="Actualizar desde Drive">
+          <i class="ti ti-refresh"></i>
+        </button>
       </div>
     </div>
 
-    <div class="view-panel" id="view-generator">
-      <div class="top-header">
-        <div class="header-title">
-          <h2>Segmentador Discador Inteligente</h2>
-          <p>Filtrá la base maestra en tiempo real y exportá los CSV limpios para OmniLeads</p>
+    <div class="content">
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="page active">
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="metric-label">Total leads</div>
+            <div class="metric-value" id="m-total">—</div>
+            <div class="metric-sub">en base histórica</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Contactación Efectiva</div>
+            <div class="metric-value c-green" id="m-contactados">—</div>
+            <div class="metric-sub" id="m-contactados-pct">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Calificados</div>
+            <div class="metric-value c-amber" id="m-calificados">—</div>
+            <div class="metric-sub" id="m-calificados-pct">—</div>
+          </div>
+          <div class="metric-card" style="border-left:3px solid var(--red);">
+            <div class="metric-label">Leads en Bucle (+3 Int)</div>
+            <div class="metric-value c-red" id="m-bucle">—</div>
+            <div class="metric-sub" style="color:var(--red-text); font-weight:500;">⚠️ Revisar o Pausar</div>
+          </div>
+        </div>
+
+        <div class="charts-row" style="grid-template-columns: 1fr 1fr; margin-bottom:1rem;">
+          <div class="card">
+            <div class="card-title">📊 Embudo de Conversión (Pipeline)</div>
+            <div id="chart-funnel" style="display:flex; flex-direction:column; gap:12px; padding:10px 0;"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">🛑 Top Motivos de Descarte</div>
+            <div id="chart-descartes"><div class="empty"><i class="ti ti-barrier-block"></i><p>Sin descartes procesados</p></div></div>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="card">
+            <div class="card-title">Contactación Detallada</div>
+            <div id="chart-contactacion"><div class="empty"><i class="ti ti-phone-off"></i><p>Cargá datos</p></div></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Calificación Detallada</div>
+            <div id="chart-calificacion"><div class="empty"><i class="ti ti-tag"></i><p>Cargá datos</p></div></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:1rem;">
+          <div class="card-title">Leads por carrera</div>
+          <div id="chart-carreras"><div class="empty"><i class="ti ti-school"></i><p>Cargá datos</p></div></div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-header"><h3><i class="ti ti-filter"></i> Parámetros de Extracción</h3></div>
-        <div class="form-grid-3">
-          <div class="form-group">
-            <label>Filtrar por Carrera</label>
-            <select class="input-field" id="f-carrera"><option value="">Todas las carreras</option></select>
-          </div>
-          <div class="form-group">
-            <label>Estado de Calificación</label>
-            <select class="input-field" id="f-calificacion">
-              <option value="">Cualquier calificación</option>
-              <option value="—">Vacíos (—)</option>
-              <option value="AGENDADO PARA SEGUIMIENTO">Agendado para Seguimiento</option>
-              <option value="DESCARTE">Descarte</option>
-              <option value="BUZON">Buzón de voz</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Estado de Contactación</label>
-            <select class="input-field" id="f-contactacion">
-              <option value="">Cualquier contactación</option>
-              <option value="—">Vacíos (—)</option>
-              <option value="Cliente no atiende">Cliente no atiende</option>
-              <option value="Contestador">Contestador</option>
-            </select>
+      <!-- AUDITORÍA (NUEVA PESTAÑA) -->
+      <div id="page-auditoria" class="page">
+        <div id="audit-alert-box" class="audit-alert-card" style="display:none;">
+          <div class="audit-alert-icon"><i class="ti ti-alert-triangle"></i></div>
+          <div>
+            <strong style="font-size:14px;">Atención Coordinación (Luciano & Camila)</strong>
+            <p style="font-size:12px; margin-top:2px;">Hay <span id="audit-alert-count" style="font-weight:bold;">0</span> leads en bucle de marcado crítico (+3 intentos fallidos). Se sugiere pausar este lote o cambiarlo de base en OmniLeads para no quemar el discador.</p>
           </div>
         </div>
-        <div class="form-grid-2">
-          <div class="form-group">
-            <label>Tope Máximo de Intentos permitidos</label>
-            <select class="input-field" id="f-intentos">
-              <option value="">Cualquier cantidad</option>
-              <option value="0">0 Intentos (Base Virgen)</option>
-              <option value="1">Hasta 1 Intento</option>
-              <option value="2">Hasta 2 Intentos</option>
-              <option value="3">Hasta 3 Intentos</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Nombre identificatorio de la Campaña</label>
-            <input type="text" class="input-field" id="campaign-name" placeholder="Ej: RMK_Seguros_Virgenes_Junio">
-          </div>
-        </div>
-        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:8px;">
-          <button class="btn" onclick="previewSegment()"><i class="ti ti-eye"></i> Calcular Segmento</button>
-          <button class="btn btn-primary" onclick="exportSegment()"><i class="ti ti-download"></i> Descargar CSV OmniLeads</button>
-        </div>
-      </div>
 
-      <div class="dashboard-row-2">
-        <div class="card">
-          <div class="card-header"><h3><i class="ti ti-list"></i> Vista Previa del Segmento (<span id="preview-count">0</span> leads calculados)</h3></div>
-          <div style="max-height: 300px; overflow-y: auto;">
-            <table class="grid-table" id="table-preview">
+        <div class="audit-grid-2x1">
+          <div class="card">
+            <div class="card-title">📉 Fuga del Pipeline Real</div>
+            <div id="audit-fuga-bars" style="display:flex; flex-direction:column; gap:15px; padding-top:10px;">
+              <div class="empty"><i class="ti ti-chart-arrows"></i><p>Sin datos cruzados</p></div>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <div class="table-header">
+              <h3>Rendimiento y Calidad por Advisor</h3>
+              <span class="badge badge-blue">Métricas directas de OmniLeads</span>
+            </div>
+            <table id="audit-agent-table">
               <thead>
-                <tr><th>Nombre</th><th>Teléfono</th><th>Carrera</th><th>Cal</th><th>Intentos</th></tr>
+                <tr>
+                  <th>Advisor / Agente</th>
+                  <th>Total Gestión</th>
+                  <th>Contactos Efectivos</th>
+                  <th>Calificados (En Seguimiento)</th>
+                  <th>Descartes</th>
+                  <th>% Efectividad Comercial</th>
+                </tr>
               </thead>
-              <tbody>
-                <tr><td colspan="5" style="text-align:center; color:var(--text-tertiary); font-style:italic;">Hacé clic en calcular segmento para ver la proyección.</td></tr>
+              <tbody id="audit-agent-body">
+                <tr>
+                  <td colspan="6" class="empty"><i class="ti ti-users"></i><p>Subí un reporte de descartes o resultados para auditar asesores.</p></td>
+                </tr>
               </tbody>
             </table>
           </div>
         </div>
-        <div class="card">
-          <div class="card-header"><h3><i class="ti ti-history"></i> Historial de Lotes Exportados (Local)</h3></div>
-          <div class="history-list" id="history-list">
-            <p style="color:var(--text-tertiary); font-style:italic; font-size:0.85rem;">No se registran exportaciones en esta sesión.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="view-panel" id="view-importer">
-      <div class="top-header">
-        <div class="header-title">
-          <h2>Importación y Cruces de OmniLeads</h2>
-          <p>Inyectá bases vírgenes o cruzá reportes de gestión telefónica del discador</p>
-        </div>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
-        <div class="card">
-          <div class="card-header"><h3><i class="ti ti-cloud-upload"></i> Cargar Base Nueva (Maestra)</h3></div>
-          <p style="font-size:0.8rem; color:var(--text-secondary);">Sube un archivo CSV con columnas estructurales (Nombre, Correo, numero_de_telefono, Carrera).</p>
-          <div class="file-upload-box" onclick="document.getElementById('file-base').click()">
-            <i class="ti ti-upload"></i>
-            <h4>Arrastrá o seleccioná tu archivo base</h4>
-            <p>Formato admitido: CSV estructurado</p>
-            <input type="file" id="file-base" accept=".csv" onchange="handleBaseFile(event)">
-          </div>
-        </div>
-
-        <div class="card" style="gap:20px;">
-          <div>
-            <div class="card-header" style="margin-bottom:8px;"><h3><i class="ti ti-git-merge"></i> Unificar Calificaciones y Resultados</h3></div>
-            <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:12px;">Cruza por teléfono los intentos, contactaciones y estados de OmniLeads.</p>
-            <button class="btn" style="width:100.5%; justify-content:center;" onclick="document.getElementById('file-results').click()"><i class="ti ti-file-analytics"></i> Seleccionar Reporte de Resultados</button>
-            <input type="file" id="file-results" accept=".csv" style="display:none;" onchange="handleResultsFile(event)">
+      <!-- DATOS -->
+      <div id="page-datos" class="page">
+        <div class="upload-grid">
+          <div class="card">
+            <div class="card-title">1. Base original</div>
+            <p style="font-size:12px; color:var(--text-tertiary); margin-bottom:0.875rem;">Subí tu CSV inicial con los datos de los alumnos.</p>
+            <div class="drop-zone" onclick="document.getElementById('file-base').click()">
+              <i class="ti ti-file-upload"></i>
+              <p>Subir CSV Base</p>
+              <input type="file" id="file-base" accept=".csv" onchange="handleBase(this)">
+            </div>
+            <div id="base-pill" style="display:none" class="file-pill">
+              <i class="ti ti-circle-check"></i>
+              <span class="fname" id="base-fname">—</span>
+              <small id="base-rows">—</small>
+            </div>
           </div>
           
-          <div style="border-top: 1px solid var(--border); padding-top:16px;">
-            <div class="card-header" style="margin-bottom:8px;"><h3><i class="ti ti-trash"></i> Unificar Motivos de Descarte Específicos</h3></div>
-            <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:12px;">Actualiza dinámicamente los motivos de descarte extendidos exportados de las campañas.</p>
-            <button class="btn" style="width:100.5%; justify-content:center; border-color:var(--amber); color:var(--amber);" onclick="document.getElementById('file-descartes').click()"><i class="ti ti-trash-x"></i> Seleccionar Reporte de Descartes</button>
-            <input type="file" id="file-descartes" accept=".csv" style="display:none;" onchange="handleDescartesFile(event)">
+          <div class="card">
+            <div class="card-title">2. Resultados OmniLeads</div>
+            <p style="font-size:12px; color:var(--text-tertiary); margin-bottom:0.875rem;">Subí el CSV general con llamadas e intentos de OmniLeads.</p>
+            <div class="drop-zone" onclick="document.getElementById('file-results').click()">
+              <i class="ti ti-file-import"></i>
+              <p>Subir CSV Discador</p>
+              <input type="file" id="file-results" accept=".csv" onchange="handleResults(this)">
+            </div>
+            <div id="results-pill" style="display:none" class="file-pill">
+              <i class="ti ti-circle-check"></i>
+              <span class="fname" id="results-fname">—</span>
+              <small id="results-rows">—</small>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">3. Base de Descartes</div>
+            <p style="font-size:12px; color:var(--text-tertiary); margin-bottom:0.875rem;">Subí el CSV de descartes para cruzar el motivo específico.</p>
+            <div class="drop-zone" onclick="document.getElementById('file-descartes').click()">
+              <i class="ti ti-barrier-block"></i>
+              <p>Subir CSV Descartes</p>
+              <input type="file" id="file-descartes" accept=".csv" onchange="handleDescartes(this)">
+            </div>
+            <div id="descartes-pill" style="display:none" class="file-pill">
+              <i class="ti ti-circle-check"></i>
+              <span class="fname" id="descartes-fname">—</span>
+              <small id="results-rows">—</small>
+            </div>
+          </div>
+        </div>
+
+        <div id="preview-wrap" style="display:block; margin-top: 15px;">
+          <div class="table-wrap">
+            <div class="table-header">
+              <h3>Vista previa en tiempo real</h3>
+              <span id="preview-badge" class="badge badge-gray">—</span>
+            </div>
+            <table id="preview-table"></table>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="view-panel" id="view-config">
-      <div class="top-header">
-        <div class="header-title">
-          <h2>Configuración de la Infraestructura</h2>
-          <p>Enlace de pasarela con Google Apps Script</p>
+      <!-- CAMPAÑA -->
+      <div id="page-campana" class="page">
+        <div class="filter-card">
+          <div class="filter-grid">
+            <div class="filter-group">
+              <label>Carrera</label>
+              <select id="f-carrera" onchange="applyFilters()">
+                <option value="">Todas las carreras</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Calificación</label>
+              <select id="f-calificacion" onchange="applyFilters()">
+                <option value="">Cualquier calificación</option>
+                <option value="__vacio__">Sin calificación</option>
+                <option value="DESCARTE">DESCARTE</option>
+                <option value="BUZON">BUZON</option>
+                <option value="AGENDADO PARA SEGUIMIENTO">AGENDADO PARA SEGUIMIENTO</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Contactación</label>
+              <select id="f-contactacion" onchange="applyFilters()">
+                <option value="">Cualquier contactación</option>
+                <option value="__vacio__">Sin contactación</option>
+                <option value="Contactado">Contactado</option>
+                <option value="Contestador">Contestador</option>
+                <option value="Cliente no atiende">Cliente no atiende</option>
+                <option value="Abandonada por cliente">Abandonada por cliente</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-divider"></div>
+          <div class="filter-grid">
+            <div class="filter-group">
+              <label>Intentos (máximo)</label>
+              <select id="f-intentos" onchange="applyFilters()">
+                <option value="">Cualquiera</option>
+                <option value="0">0 — sin trabajar</option>
+                <option value="1">Hasta 1 intento</option>
+                <option value="2">Hasta 2 intentos</option>
+                <option value="3">Hasta 3 intentos</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Nombre de la campaña</label>
+              <input type="text" id="campaign-name" placeholder="Ej: LEADS PROG JUNIO 01">
+            </div>
+            <div class="filter-group" style="justify-content:flex-end;">
+              <button class="btn btn-primary" onclick="exportCampaign()">
+                <i class="ti ti-download"></i> Exportar CSV
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <h3>Leads filtrados</h3>
+            <span id="filtered-badge" class="badge badge-green">0 leads</span>
+          </div>
+          <div id="campaign-table">
+            <div class="empty"><i class="ti ti-filter"></i><p>Cargá una base y aplicá filtros</p></div>
+          </div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header"><h3><i class="ti ti-link"></i> Endpoint Web App URL</h3></div>
-        <div class="form-group">
-          <label>URL de Ejecución de Google Apps Script (Macro)</label>
-          <input type="text" class="input-field" id="script-url" placeholder="https://script.google.com/macros/s/.../exec" onchange="saveConfig()">
-          <p style="font-size:0.75rem; color:var(--text-tertiary); margin-top:4px;">Cualquier cambio se almacenará en el almacenamiento local del navegador para futuras sesiones.</p>
-        </div>
-        <div style="display:flex; justify-content:flex-end;">
-          <button class="btn btn-primary" onclick="testConnection()"><i class="ti ti-plug"></i> Probar Conexión</button>
+
+      <!-- HISTORIAL -->
+      <div id="page-historial" class="page">
+        <div id="history-list">
+          <div class="empty"><i class="ti ti-clock"></i><p>Las campañas exportadas aparecerán acá</p></div>
         </div>
       </div>
     </div>
-  </main>
+  </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<div class="toast-wrap" id="toast-wrap"></div>
+
 <script>
+let localData = [];
 let scriptUrl = localStorage.getItem("cm_script_url") || "";
-let baseRows = [];
 let campaignHistory = JSON.parse(localStorage.getItem("cm_history") || "[]");
 
-document.getElementById("script-url").value = scriptUrl;
-renderHistory();
-if(scriptUrl) testConnection();
+document.addEventListener("DOMContentLoaded", () => {
+  if (scriptUrl) document.getElementById("script-url-input").value = scriptUrl;
+  renderHistory();
+  document.querySelectorAll(".nav-item").forEach(el => {
+    el.addEventListener("click", () => showPage(el.dataset.page));
+  });
+  if (scriptUrl) testConnection();
+});
 
-function switchView(viewId) {
-  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-  document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
-  
-  const targetBtn = Array.from(document.querySelectorAll(".nav-btn")).find(b => b.getAttribute("onclick").includes(viewId));
-  if(targetBtn) targetBtn.classList.add("active");
-  
-  const panel = document.getElementById("view-" + viewId);
-  if(panel) panel.classList.add("active");
-  
-  if(viewId === 'dashboard' && scriptUrl) fetchStats();
+function showPage(page) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("page-" + page).classList.add("active");
+  document.querySelector(`[data-page="${page}"]`).classList.add("active");
+  const titles = { dashboard:"Dashboard", auditoria:"Auditoría de Control", datos:"Cargar datos", campana:"Armar campaña", historial:"Historial" };
+  document.getElementById("page-title").textContent = titles[page];
+  if (page === "campana" && localData.length) applyFilters();
 }
 
-function saveConfig() {
-  scriptUrl = document.getElementById("script-url").value.trim();
+function saveScriptUrl(val) {
+  scriptUrl = val.trim();
   localStorage.setItem("cm_script_url", scriptUrl);
-  testConnection();
 }
 
-function showLoading(show) {
-  document.getElementById("loading").classList.toggle("active", show);
-}
-
-function toast(msg, type="") {
-  const wrap = document.getElementById("toast-wrap");
-  const el = document.createElement("div");
-  el.className = `toast ${type}`;
-  el.innerHTML = `<i class="ti ti-info-circle"></i> <span>${msg}</span>`;
-  wrap.appendChild(el);
-  setTimeout(() => el.remove(), 4000);
-}
-
-function apiGet(params, cb) {
-  if(!scriptUrl) return toast("Configurá la URL de la API primero", "amber");
-  const query = new URLSearchParams(params).toString();
-  fetch(`${scriptUrl}?${query}`)
-    .then(res => res.json())
-    .then(data => cb(data))
-    .catch(err => { showLoading(false); toast("Error de red en GET API: " + err.message, "red"); });
-}
-
-function apiPost(body, cb) {
-  if(!scriptUrl) return toast("Configurá la URL de la API primero", "amber");
-  fetch(scriptUrl, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  })
-  .then(() => { if(cb) cb({ ok: true }); })
-  .catch(err => { showLoading(false); toast("Error de red en POST API: " + err.message, "red"); });
-}
-
-function testConnection() {
-  if(!scriptUrl) return;
-  const sideStatus = document.getElementById("side-status");
-  const sideText = document.getElementById("side-status-text");
-  
-  fetch(`${scriptUrl}?action=ping`)
-    .then(res => res.json())
-    .then(data => {
-      if(data.ok) {
-        sideStatus.className = "config-status connected";
-        sideText.innerText = "Sheets Enlazado";
-        toast("Conexión con Google Sheets exitosa", "green");
-        fetchStats();
-      } else {
-        throw new Error();
-      }
-    })
-    .catch(() => {
-      sideStatus.className = "config-status disconnected";
-      sideText.innerText = "Error de Enlace";
-      toast("No se pudo conectar con la Macro. Verifique permisos.", "red");
-    });
-}
-
-function fetchStats() {
-  if(!scriptUrl) return;
-  showLoading(true);
-  apiGet({ action: "getStats" }, function(data) {
-    showLoading(false);
-    if(data.error) return toast("Error: " + data.error, "red");
-    
-    document.getElementById("st-total").innerText = data.total || 0;
-    document.getElementById("st-contactados").innerText = data.contactados || 0;
-    document.getElementById("st-calificados").innerText = data.calificados || 0;
-    document.getElementById("st-sinTrabajar").innerText = data.sinTrabajar || 0;
-    document.getElementById("st-leadsEnBucle").innerText = data.leadsEnBucle || 0;
-    
-    const pctCont = data.total ? ((data.contactados / data.total) * 100).toFixed(1) : 0;
-    const pctCal = data.contactados ? ((data.calificados / data.contactados) * 100).toFixed(1) : 0;
-    
-    document.getElementById("st-pct-cont").innerText = `${pctCont}% del total general`;
-    document.getElementById("st-pct-cal").innerText = `${pctCal}% de efectividad`;
-    
-    renderSimpleChart("chart-contact", data.contactMap || {});
-    renderSimpleChart("chart-cal", data.calMap || {});
-    
-    // Tabla de Carreras
-    const carBody = document.querySelector("#table-carreras tbody");
-    carBody.innerHTML = Object.keys(data.carreraMap || {}).length 
-      ? Object.entries(data.carreraMap).map(([k,v]) => `<tr><td><b>${k}</b></td><td><span class="badge badge-secondary">${v} leads</span></td></tr>`).join("")
-      : `<tr><td colspan="2" style="color:var(--text-tertiary); text-align:center;">Sin datos</td></tr>`;
-
-    // Tabla de Descartes
-    const descBody = document.querySelector("#table-descartes tbody");
-    descBody.innerHTML = Object.keys(data.descarteMap || {}).length
-      ? Object.entries(data.descarteMap).map(([k,v]) => `<tr><td><b>${k}</b></td><td><span class="badge badge-red">${v} desvíos</span></td></tr>`).join("")
-      : `<tr><td colspan="2" style="color:var(--text-tertiary); text-align:center;">Sin descartes registrados</td></tr>`;
-      
-    // RENDERIZAR TABLA DE RENDIMIENTO POR ADVISOR
-    renderAdvisorsTable(data.agentMap || {});
-    
-    // Guardar filtros disponibles dinámicamente si hay carreras
-    if(data.carreraMap) {
-      const sel = document.getElementById("f-carrera");
-      const current = sel.value;
-      sel.innerHTML = `<option value="">Todas las carreras</option>` + Object.keys(data.carreraMap).map(c => `<option value="${c}">${c}</option>`).join("");
-      sel.value = current;
+async function testConnection() {
+  if (!scriptUrl) return;
+  setConnStatus("connecting");
+  try {
+    const res = await apiFetch("ping");
+    if (res.ok) {
+      setConnStatus("connected");
+      toast("Conectado a Google Drive ✓", "success");
+      refreshData();
+    } else {
+      setConnStatus("error");
     }
+  } catch(e) {
+    setConnStatus("error");
+  }
+}
+
+function setConnStatus(state) {
+  const dot = document.getElementById("conn-dot");
+  const lbl = document.getElementById("conn-label");
+  const map = { connecting:["#EF9F27","Conectando…"], connected:["#1D9E75","Conectado"], error:["#E24B4A","Error"], default:["#ccc","Sin conectar"] };
+  const [color, text] = map[state] || map.default;
+  dot.style.background = color;
+  lbl.textContent = text;
+}
+
+async function apiFetch(action) {
+  return fetch(scriptUrl + "?action=" + action + "&t=" + Date.now(), { redirect: "follow" }).then(r => r.json());
+}
+
+async function apiPost(body) {
+  return fetch(scriptUrl, {
+    method: "POST",
+    redirect: "follow",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(body)
+  }).then(r => r.json());
+}
+
+async function refreshData() {
+  if (!scriptUrl) return;
+  try {
+    const res = await apiFetch("getStats");
+    if (res.error) return;
+    updateDashboard(res);
+    updateAuditoriaTabs(res);
+    document.getElementById("db-info").textContent = res.total + " leads en Drive";
+    
+    const baseRes = await apiFetch("getBase");
+    if (baseRes.rows) {
+      localData = baseRes.rows.map(r => {
+        r["Calificación"] = r["Calificación"] || "—";
+        r["Contactación"] = r["Contactación"] || "—";
+        r["Intentos"] = r["Intentos"] !== undefined ? String(r["Intentos"]) : "0";
+        r["Motivos de Descarte"] = r["Motivos de Descarte"] || "—";
+        return r;
+      });
+      updateCarreraFilter();
+      renderPreview(localData);
+    }
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const sep = lines[0].includes(";") ? ";" : ",";
+  const headers = lines[0].split(sep).map(h => h.trim().replace(/^"|"$/g,""));
+  return lines.slice(1).map(line => {
+    const vals = line.split(sep).map(v => v.trim().replace(/^"|"$/g,""));
+    const obj = {};
+    headers.forEach((h,i) => obj[h] = vals[i] || "");
+    return obj;
   });
 }
 
-function renderAdvisorsTable(agentMap) {
-  const tbody = document.querySelector("#table-advisors tbody");
-  const agents = Object.entries(agentMap);
+function normalizePhone(p) {
+  return String(p||"").replace(/\D/g,"").slice(-10);
+}
+
+function handleBase(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const rows = parseCSV(e.target.result);
+    if (!rows.length) return;
+    
+    localData = rows.map(r => {
+      const keys = Object.keys(r);
+      const nKey = keys.find(k => k.toLowerCase().trim() === "nombre") || "Nombre";
+      const cKey = keys.find(k => k.toLowerCase().trim() === "correo") || "Correo";
+      const pKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono")) || "numero_de_telefono";
+      const carKey = keys.find(k => k.toLowerCase().trim() === "carrera") || "Carrera";
+      
+      return {
+        "Nombre": r[nKey] || "",
+        "Correo": r[cKey] || "",
+        "numero_de_telefono": r[pKey] || "",
+        "Numero_de_telefono_de_WhatsApp": r["Numero_de_telefono_de_WhatsApp"] || "",
+        "Carrera": r[carKey] || "",
+        "Calificación": "—",
+        "Contactación": "—",
+        "Intentos": "0",
+        "Motivos de Descarte": "—"
+      };
+    });
+    
+    document.getElementById("base-pill").style.display = "flex";
+    document.getElementById("base-fname").textContent = file.name;
+    document.getElementById("base-rows").textContent = localData.length + " filas";
+    
+    renderPreview(localData);
+    toast("Subiendo y cruzando base histórica...");
+    
+    if (scriptUrl) {
+      const res = await apiPost({ action: "uploadBase", rows: localData });
+      if (res.ok) {
+        toast(`Base: +${res.added} nuevos | ✓ ${res.updated} actualizados`, "success");
+        setTimeout(refreshData, 1000);
+      }
+    }
+  };
+  reader.readAsText(file);
+}
+
+function handleResults(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const rows = parseCSV(e.target.result);
+    if (!rows.length) return;
+
+    document.getElementById("results-pill").style.display = "flex";
+    document.getElementById("results-fname").textContent = file.name;
+    document.getElementById("results-rows").textContent = rows.length + " filas";
+
+    toast("Unificando e indexando OmniLeads...");
+    if (scriptUrl) {
+      const res = await apiPost({ action: "mergeResults", rows: rows });
+      if (res && res.ok) {
+        toast("Resultados guardados en Drive ✓", "success");
+        setTimeout(refreshData, 1000);
+      }
+    }
+  };
+  reader.readAsText(file);
+}
+
+function handleDescartes(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const rows = parseCSV(e.target.result);
+    if (!rows.length) return;
+
+    document.getElementById("descartes-pill").style.display = "flex";
+    document.getElementById("descartes-fname").textContent = file.name;
+    document.getElementById("descartes-rows").textContent = rows.length + " filas";
+
+    toast("Cruzando motivos de descarte...");
+    if (scriptUrl) {
+      const res = await apiPost({ action: "mergeDescartes", rows: rows });
+      if (res && res.ok) {
+        toast("Descartes guardados en Drive ✓", "success");
+        setTimeout(refreshData, 1000);
+      }
+    }
+  };
+  reader.readAsText(file);
+}
+
+function renderPreview(data) {
+  if (!data || !data.length) return;
+  const previewRows = data.slice(0, 8);
+  document.getElementById("preview-badge").textContent = data.length + " registros";
+
+  document.getElementById("preview-table").innerHTML =
+    `<thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Teléfono</th>
+        <th>Calificación</th>
+        <th>Contactación</th>
+        <th>Intentos</th>
+        <th>Motivo Descarte</th>
+      </tr>
+    </thead>
+    <tbody>` +
+    previewRows.map(r => `<tr>
+        <td>${r["Nombre"] || "—"}</td>
+        <td>${r["numero_de_telefono"] || "—"}</td>
+        <td><span class="badge ${r["Calificación"] !== '—' && r["Calificación"] !== '' ? 'badge-amber' : 'badge-gray'}">${r["Calificación"]}</span></td>
+        <td><span class="badge ${r["Contactación"] !== '—' && r["Contactación"] !== '' ? 'badge-blue' : 'badge-gray'}">${r["Contactación"]}</span></td>
+        <td>${r["Intentos"] || "0"}</td>
+        <td><span style="color:var(--red-text); font-weight:600;">${r["Motivos de Descarte"] || "—"}</span></td>
+      </tr>`).join("") + `</tbody>`;
+}
+
+function updateDashboard(stats) {
+  document.getElementById("m-total").textContent = stats.total || 0;
+  document.getElementById("m-contactados").textContent = stats.contactados || 0;
+  document.getElementById("m-contactados-pct").textContent = stats.total ? Math.round(stats.contactados/stats.total*100) + "% del total" : "—";
+  document.getElementById("m-calificados").textContent = stats.calificados || 0;
+  document.getElementById("m-calificados-pct").textContent = stats.total ? Math.round(stats.calificados/stats.total*100) + "% calificados" : "—";
+  document.getElementById("m-bucle").textContent = stats.leadsEnBucle || 0;
   
-  if (agents.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-tertiary); font-style:italic;">No hay datos de gestión de agentes en este bloque.</td></tr>`;
+  // Render de Embudo Proporcional Histórico
+  const total = stats.total || 1;
+  const contactados = stats.contactados || 0;
+  const calificados = stats.calificados || 0;
+  
+  const pctContactados = Math.round((contactados / total) * 100);
+  const pctCalificados = Math.round((calificados / total) * 100);
+  
+  document.getElementById("chart-funnel").innerHTML = `
+    <div style="margin-bottom: 4px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+        <span><strong>1. Base Cargada Total</strong></span>
+        <span>${total} (100%)</span>
+      </div>
+      <div style="background:var(--bg-secondary); border-radius:4px; height:18px; width:100%;">
+        <div class="fill-blue" style="height:100%; border-radius:4px; width:100%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;">100%</div>
+      </div>
+    </div>
+    <div style="margin-bottom: 4px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+        <span><strong>2. Contactación Efectiva</strong></span>
+        <span>${contactados} (${pctContactados}%)</span>
+      </div>
+      <div style="background:var(--bg-secondary); border-radius:4px; height:18px; width:100%;">
+        <div class="fill-green" style="height:100%; border-radius:4px; width:${pctContactados}%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;">${pctContactados}%</div>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+        <span><strong>3. Alumnos Avanzados / Calificados</strong></span>
+        <span>${calificados} (${pctCalificados}%)</span>
+      </div>
+      <div style="background:var(--bg-secondary); border-radius:4px; height:18px; width:100%;">
+        <div class="fill-amber" style="height:100%; border-radius:4px; width:${pctCalificados}%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;">${pctCalificados}%</div>
+      </div>
+    </div>
+  `;
+
+  renderBars("chart-contactacion", stats.contactMap, ["fill-teal","fill-blue","fill-amber","fill-gray","fill-red"]);
+  renderBars("chart-calificacion", stats.calMap, ["fill-amber","fill-red","fill-green"]);
+  renderBars("chart-carreras", stats.carreraMap, Array(10).fill("fill-blue"));
+  renderBars("chart-descartes", stats.descarteMap, Array(5).fill("fill-red"));
+}
+
+// NUEVO: Renderizador específico para la pestaña de Auditoría (Luciano & Camila)
+function updateAuditoriaTabs(stats) {
+  // 1. Control de caja de alertas
+  const alertBox = document.getElementById("audit-alert-box");
+  if (stats.leadsEnBucle > 0) {
+    alertBox.style.display = "flex";
+    document.getElementById("audit-alert-count").textContent = stats.leadsEnBucle;
+  } else {
+    alertBox.style.display = "none";
+  }
+
+  // 2. Gráfico de deserción / Fuga real
+  const total = stats.total || 1;
+  const contactados = stats.contactados || 0;
+  const calificados = stats.calificados || 0;
+  
+  const pctFugaContactados = Math.round(((total - contactados) / total) * 100);
+  const pctFugaComercial = contactados > 0 ? Math.round(((contactados - calificados) / contactados) * 100) : 0;
+
+  document.getElementById("audit-fuga-bars").innerHTML = `
+    <div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+        <span>Fuga en Marcación (Leads no contactados)</span>
+        <span style="color:var(--red-text); font-weight:bold;">${pctFugaContactados}% de deserción</span>
+      </div>
+      <div style="background:var(--bg-secondary); border-radius:4px; height:8px; width:100%;">
+        <div class="fill-red" style="height:100%; border-radius:4px; width:${pctFugaContactados}%;"></div>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+        <span>Fuga Comercial (Contactados que cayeron / descartes)</span>
+        <span style="color:var(--amber-text); font-weight:bold;">${pctFugaComercial}% no cerrados</span>
+      </div>
+      <div style="background:var(--bg-secondary); border-radius:4px; height:8px; width:100%;">
+        <div class="fill-amber" style="height:100%; border-radius:4px; width:${pctFugaComercial}%;"></div>
+      </div>
+    </div>
+  `;
+
+  // 3. Tabla de Advisors Dinámica
+  const tbody = document.getElementById("audit-agent-body");
+  if (!stats.agentMap || !Object.keys(stats.agentMap).length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty"><i class="ti ti-users"></i><p>Sin reportes vinculados a agentes en esta base.</p></td></tr>`;
     return;
   }
-  
-  tbody.innerHTML = agents.map(([name, stats]) => {
-    // Conversión comercial neta = (Calificados / Total Gestionado) * 100
-    const conversion = stats.totalGestionado ? ((stats.calificados / stats.totalGestionado) * 100).toFixed(1) : "0.0";
-    
-    return `
+
+  let htmlRows = "";
+  Object.entries(stats.agentMap).forEach(([agentName, data]) => {
+    const efPct = data.efectivos > 0 ? Math.round((data.calificados / data.efectivos) * 100) : 0;
+    htmlRows += `
       <tr>
-        <td><strong><i class="ti ti-user" style="color:var(--text-secondary); margin-right:4px;"></i>${name}</strong></td>
-        <td><span class="badge badge-secondary">${stats.totalGestionado} leads</span></td>
-        <td><span class="badge badge-green">${stats.efectivos} efectivas</span></td>
-        <td><span class="badge badge-green" style="background-color: #e2f0fd; color: var(--blue);">${stats.calificados} calif.</span></td>
-        <td><span class="badge badge-red" style="background-color: #fff0f0; color: var(--red);">${stats.descartes} desc.</span></td>
-        <td><strong>${conversion}%</strong></td>
+        <td style="font-weight:500;"><i class="ti ti-user" style="font-size:14px; vertical-align:middle; margin-right:4px; color:var(--text-secondary);"></i>${agentName}</td>
+        <td><span class="badge badge-gray">${data.totalGestionado}</span></td>
+        <td><span class="badge badge-blue">${data.efectivos}</span></td>
+        <td><span class="badge badge-green">${data.calificados}</span></td>
+        <td><span class="badge badge-red">${data.descartes}</span></td>
+        <td style="font-weight:bold; color: ${efPct >= 40 ? 'var(--green)' : 'var(--text)'}">${efPct}% de efectividad</td>
       </tr>
     `;
-  }).join("");
+  });
+  tbody.innerHTML = htmlRows;
 }
 
-function renderSimpleChart(containerId, map) {
-  const el = document.getElementById(containerId);
-  const entries = Object.entries(map);
-  if(!entries.length) {
-    el.innerHTML = `<span class="empty-chart-text">Sin registros de interacciones</span>`;
+function renderBars(containerId, map, fills) {
+  if (!map || !Object.keys(map).length) {
+    document.getElementById(containerId).innerHTML = `<div class="empty"><i class="ti ti-chart-pie"></i><p>Sin datos</p></div>`;
     return;
   }
-  const total = entries.reduce((acc, [_,v]) => acc+v, 0);
-  el.innerHTML = `<div style="width:100%; display:flex; flex-direction:column; gap:8px; font-size:0.8rem;">
-    ${entries.slice(0, 5).map(([k,v]) => {
-      const p = ((v/total)*100).toFixed(1);
-      return `<div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span>${k}</span><b>${v} (${p}%)</b></div>
-        <div style="width:100%; height:6px; background:var(--bg-secondary); border-radius:3px; overflow:hidden;">
-          <div style="width:${p}%; height:100%; background:var(--green);"></div>
-        </div>
-      </div>`;
-    }).join("")}
-  </div>`;
+  const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const max = entries[0]?.[1] || 1;
+  document.getElementById(containerId).innerHTML = entries.map(([k,v],i) =>
+    `<div class="bar-row">
+      <span class="bar-label" title="${k}">${k}</span>
+      <div class="bar-track"><div class="bar-fill ${fills[i]||"fill-gray"}" style="width:${Math.round(v/max*100)}%"></div></div>
+      <span class="bar-count">${v}</span>
+    </div>`
+  ).join("");
 }
 
-function previewSegment() {
-  showLoading(true);
-  apiGet({ action: "getBase" }, function(data) {
-    showLoading(false);
-    if(!data.rows) return toast("Error al descargar pre-segmento", "red");
-    baseRows = data.rows;
-    filterAndRenderPreview();
-  });
+function updateCarreraFilter() {
+  const carreras = [...new Set(localData.map(r=>r["Carrera"]).filter(Boolean))].sort();
+  document.getElementById("f-carrera").innerHTML = `<option value="">Todas las carreras</option>` + carreras.map(c=>`<option value="${c}">${c}</option>`).join("");
 }
 
-function filterAndRenderPreview() {
-  const fCar = document.getElementById("f-carrera").value;
-  const fCal = document.getElementById("f-calificacion").value;
-  const fCon = document.getElementById("f-contactacion").value;
-  const fInt = document.getElementById("f-intentos").value;
-  
-  const filtered = baseRows.filter(r => {
-    if(fCar && r["Carrera"] !== fCar) return false;
-    if(fCal && String(r["Calificación"]||"—").trim() !== fCal) return false;
-    if(fCon && String(r["Contactación"]||"—").trim() !== fCon) return false;
-    if(fInt !== "") {
-      const cellInt = parseInt(r["Intentos"] || 0);
-      if(cellInt > parseInt(fInt)) return false;
-    }
+function getFiltered() {
+  const car = document.getElementById("f-carrera").value;
+  const cal = document.getElementById("f-calificacion").value;
+  const con = document.getElementById("f-contactacion").value;
+  const att = document.getElementById("f-intentos").value;
+  return localData.filter(r => {
+    if (car && r["Carrera"] !== car) return false;
+    if (cal === "__vacio__" && r["Calificación"] !== "—" && r["Calificación"] !== "") return false;
+    if (cal && cal !== "__vacio__" && r["Calificación"] !== cal) return false;
+    if (con === "__vacio__" && r["Contactación"] !== "—" && r["Contactación"] !== "") return false;
+    if (con && con !== "__vacio__" && r["Contactación"] !== con) return false;
+    if (att !== "" && parseInt(r["Intentos"]||"0") > parseInt(att)) return false;
     return true;
   });
-  
-  document.getElementById("preview-count").innerText = filtered.length;
-  
-  const tbody = document.querySelector("#table-preview tbody");
-  tbody.innerHTML = filtered.length
-    ? filtered.slice(0, 30).map(r => `<tr><td>${r["Nombre"]}</td><td>${r["numero_de_telefono"]}</td><td>${r["Carrera"]}</td><td>${r["Calificación"]||"—"}</td><td>${r["Intentos"]||0}</td></tr>`).join("")
-    : `<tr><td colspan="5" style="text-align:center; color:var(--text-tertiary);">Ningún lead coincide con el filtro comercial seleccionado.</td></tr>`;
-    
-  return filtered;
 }
 
-function exportSegment() {
-  const name = document.getElementById("campaign-name").value.trim() || "Campaña_OmniLeads";
-  if(!baseRows.length) {
-    showLoading(true);
-    apiGet({ action: "getBase" }, function(data) {
-      showLoading(false);
-      baseRows = data.rows || [];
-      if(!baseRows.length) return toast("No hay datos en la nube para exportar", "amber");
-      executeExport(name);
-    });
-  } else {
-    executeExport(name);
-  }
+function applyFilters() {
+  const filtered = getFiltered();
+  document.getElementById("filtered-badge").textContent = filtered.length + " leads";
+  const ct = document.getElementById("campaign-table");
+  if (!filtered.length) { ct.innerHTML = `<div class="empty"><i class="ti ti-mood-empty"></i><p>Ningún lead encontrado</p></div>`; return; }
+  
+  ct.innerHTML = `<table><thead><tr><th>Nombre</th><th>Carrera</th><th>Teléfono</th><th>Calificación</th><th>Contactación</th><th>Intentos</th></tr></thead><tbody>` +
+    filtered.slice(0, 50).map(r=>`<tr><td>${r["Nombre"]}</td><td>${r["Carrera"]}</td><td>${r["numero_de_telefono"]}</td><td><span class="badge badge-amber">${r["Calificación"]}</span></td><td><span class="badge badge-blue">${r["Contactación"]}</span></td><td>${r["Intentos"]}</td></tr>`).join("") +
+    `</tbody></table>`;
 }
 
-function executeExport(name) {
-  const filtered = filterAndRenderPreview();
-  if(!filtered.length) return toast("El segmento está vacío, nada que exportar", "amber");
+function exportCampaign() {
+  const filtered = getFiltered();
+  if (!filtered.length) return;
+  const name = document.getElementById("campaign-name").value.trim() || "CAMPAÑA_" + new Date().toISOString().slice(0,10);
+  const csvCols = ["Nombre", "Correo", "numero_de_telefono", "Numero_de_telefono_de_WhatsApp", "Carrera"];
+  const csv = [csvCols.join(","), ...filtered.map(r => csvCols.map(c=>`"${r[c]||""}"`).join(","))].join("\n");
   
-  // Formato exacto para OmniLeads
-  const exportData = filtered.map(r => ({
-    nombre: r["Nombre"] || "",
-    email: r["Correo"] || "",
-    telefono: r["numero_de_telefono"] || ""
-  }));
-  
-  const csv = Papa.unparse(exportData);
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = name.replace(/\s+/g, "_") + ".csv"; a.click();
+  a.href = url; a.download = name.replace(/\s+/g,"_") + ".csv"; a.click();
   
   const entry = { name, leads: filtered.length, carrera: document.getElementById("f-carrera").value||"Todas", cal: document.getElementById("f-calificacion").value||"—", con: document.getElementById("f-contactacion").value||"—", intentos: document.getElementById("f-intentos").value||"—", date: new Date().toLocaleDateString("es-AR") };
   campaignHistory.unshift(entry);
   localStorage.setItem("cm_history", JSON.stringify(campaignHistory.slice(0, 50)));
   renderHistory();
-  if(scriptUrl) apiPost({ action: "logCampaign", entry });
+  if (scriptUrl) apiPost({ action:"logCampaign", entry });
 }
 
 function renderHistory() {
   const list = document.getElementById("history-list");
-  if(!campaignHistory.length) return;
-  list.innerHTML = campaignHistory.map(h => `<div class=\"history-item\"><div class=\"history-icon\"><i class=\"ti ti-file-export\"></i></div><div class=\"history-info\"><h4>${h.name}</h4><p>${h.leads} leads · ${h.carrera} · Cal: ${h.cal}</p></div></div>`).join("");
+  if (!campaignHistory.length) return;
+  list.innerHTML = campaignHistory.map(h => `<div class="history-item"><div class="history-icon"><i class="ti ti-file-export"></i></div><div class="history-info"><h4>${h.name}</h4><p>${h.leads} leads · ${h.carrera} · Cal: ${h.cal}</p></div></div>`).join("");
 }
 
-function handleBaseFile(e) {
-  const file = e.target.files[0];
-  if(!file) return;
-  Papa.parse(file, {
-    header: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-      showLoading(true);
-      apiPost({ action: "uploadBase", rows: results.data }, function() {
-        showLoading(false);
-        toast("Base de datos subida e indexada con éxito", "green");
-        fetchStats();
-      });
-    }
-  });
-}
-
-function handleResultsFile(e) {
-  const file = e.target.files[0];
-  if(!file) return;
-  Papa.parse(file, {
-    header: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-      // NORMALIZACIÓN INTELIGENTE PARA LOS RESULTADOS
-      const rawRows = results.data;
-      const formattedRows = rawRows.map(r => {
-        const keys = Object.keys(r);
-        const pKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono") || k.toLowerCase() === "telefono");
-        const calKey = keys.find(k => k.toLowerCase().includes("calificac"));
-        const conKey = keys.find(k => k.toLowerCase().includes("contactac"));
-        const intKey = keys.find(k => k.toLowerCase().includes("intento"));
-        const agKey = keys.find(k => k.toLowerCase().includes("agent") || k.toLowerCase().includes("usuari") || k.toLowerCase().includes("advisor"));
-
-        return {
-          "numero_de_telefono": pKey ? r[pKey] : "",
-          "Calificación": calKey ? r[calKey] : "",
-          "Contactación": conKey ? r[conKey] : "",
-          "Intentos": intKey ? r[intKey] : "1",
-          "Agente": agKey ? r[agKey] : ""
-        };
-      }).filter(r => r.numero_de_telefono);
-
-      showLoading(true);
-      apiPost({ action: "mergeResults", rows: formattedRows }, function(res) {
-        showLoading(false);
-        toast(`Sincronización completa. Registros mapeados con Sheets.`, "green");
-        fetchStats();
-      });
-    }
-  });
-}
-
-function handleDescartesFile(e) {
-  const file = e.target.files[0];
-  if(!file) return;
-  Papa.parse(file, {
-    header: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-      // NORMALIZACIÓN INTELIGENTE PARA LOS DESCARTES
-      const rawRows = results.data;
-      const formattedRows = rawRows.map(r => {
-        const keys = Object.keys(r);
-        const pKey = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes("telefono") || k.toLowerCase() === "telefono");
-        const dKey = keys.find(k => k.toLowerCase().includes("descarte") || k.toLowerCase().includes("motivo"));
-        const agKey = keys.find(k => k.toLowerCase().includes("agent") || k.toLowerCase().includes("usuari") || k.toLowerCase().includes("advisor"));
-
-        return {
-          "numero_de_telefono": pKey ? r[pKey] : "",
-          "Descarte": dKey ? r[dKey] : "",
-          "Agente": agKey ? r[agKey] : ""
-        };
-      }).filter(r => r.numero_de_telefono);
-
-      showLoading(true);
-      apiPost({ action: "mergeDescartes", rows: formattedRows }, function(res) {
-        showLoading(false);
-        toast(`Descartes volcados correctamente a la Base Histórica`, "green");
-        fetchStats();
-      });
-    }
-  });
+function toast(msg, type="") {
+  const wrap = document.getElementById("toast-wrap");
+  const el = document.createElement("div");
+  el.className = "toast" + (type ? " " + type : "");
+  el.innerHTML = `<i class="ti ti-${type==="error"?"alert-circle":"circle-check"}"></i> ${msg}`;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
 }
 </script>
 </body>
