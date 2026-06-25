@@ -650,8 +650,30 @@ function handleDescartes(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async e => {
-    const rows = parseCSV(e.target.result);
-    if (!rows.length) return;
+    const rawRows = parseCSV(e.target.result);
+    if (!rawRows.length) return;
+
+    // Normalizar columnas antes de enviar al backend
+    // Prioriza "Descarte.1" sobre "DESCARTE" (que llega vacío en el export de OmniLeads)
+    const rows = rawRows.map(r => {
+      const keys = Object.keys(r);
+
+      const telKey = keys.find(k => k.toLowerCase().replace(/[^a-z]/g,"").includes("telefono"));
+
+      // Priorizar Descarte.1 (motivo real) sobre DESCARTE (siempre vacío)
+      const motivoKey = keys.find(k => k === "Descarte.1")
+                     || keys.find(k => k !== "DESCARTE" && k.toLowerCase().includes("descarte") && r[k] !== "")
+                     || keys.find(k => k.toLowerCase().includes("motivo"));
+
+      const agenteKey = keys.find(k => k.toLowerCase() === "agente")
+                     || keys.find(k => k.toLowerCase().includes("agent"));
+
+      return {
+        telefono: telKey ? r[telKey] : "",
+        motivo:   motivoKey ? r[motivoKey] : "",
+        agente:   agenteKey ? r[agenteKey] : ""
+      };
+    }).filter(r => r.telefono);
 
     document.getElementById("descartes-pill").style.display = "flex";
     document.getElementById("descartes-fname").textContent = file.name;
