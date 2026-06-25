@@ -654,14 +654,15 @@ function handleDescartes(input) {
     if (!rawRows.length) return;
 
     // Normalizar columnas antes de enviar al backend
-    // Prioriza "Descarte.1" sobre "DESCARTE" (que llega vacío en el export de OmniLeads)
+    // OmniLeads exporta dos columnas: DESCARTE (siempre vacío) y Descarte (motivo real)
     const rows = rawRows.map(r => {
       const keys = Object.keys(r);
 
       const telKey = keys.find(k => k.toLowerCase().replace(/[^a-z]/g,"").includes("telefono"));
 
-      // Priorizar Descarte.1 (motivo real) sobre DESCARTE (siempre vacío)
-      const motivoKey = keys.find(k => k === "Descarte.1")
+      // Priorizar "Descarte" (match exacto, motivo real) sobre "DESCARTE" (vacío siempre)
+      const motivoKey = keys.find(k => k === "Descarte")
+                     || keys.find(k => k === "Descarte.1")
                      || keys.find(k => k !== "DESCARTE" && k.toLowerCase().includes("descarte") && r[k] !== "")
                      || keys.find(k => k.toLowerCase().includes("motivo"));
 
