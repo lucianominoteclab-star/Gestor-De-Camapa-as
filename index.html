@@ -622,6 +622,9 @@ function handleBase(input) {
     const rows = parseCSV(e.target.result);
     if (!rows.length) return;
     
+    // Limpiamos el nombre del archivo para quitarle el ".csv" al final si quieres que quede más prolijo
+    const cleanFileName = file.name.replace(/\.[^/.]+$/, "");
+    
     localData = rows.map(r => {
       const keys = Object.keys(r);
       const nKey = keys.find(k => k.toLowerCase().trim() === "nombre") || "Nombre";
@@ -639,7 +642,7 @@ function handleBase(input) {
         "Contactación": "—",
         "Intentos": "0",
         "Motivos de Descarte": "—",
-        "Campaña Actual": "—"
+        "Campaña": cleanFileName // Pasamos el nombre del archivo limpio como propiedad por defecto
       };
     });
     
@@ -648,10 +651,13 @@ function handleBase(input) {
     document.getElementById("base-rows").textContent = localData.length + " filas";
     
     renderPreview(localData);
+    toast("Subiendo y cruzando base histórica...");
+    
     if (scriptUrl) {
-      const res = await apiPost({ action: "uploadBase", rows: localData });
+      // AQUÍ AGREGAMOS EL 'fileName' EN EL PAYLOAD DEL POST
+      const res = await apiPost({ action: "uploadBase", rows: localData, fileName: cleanFileName });
       if (res.ok) {
-        toast(`Base cargada correctamente`, "success");
+        toast(`Base: +${res.added} nuevos | ✓ ${res.updated} actualizados`, "success");
         setTimeout(refreshData, 1000);
       }
     }
