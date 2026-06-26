@@ -658,9 +658,36 @@ function updateDashboard(stats) {
   document.getElementById("m-calificados-pct").textContent = stats.total ? Math.round(stats.calificados/stats.total*100) + "% calificados" : "—";
   document.getElementById("m-bucle").textContent = stats.leadsEnBucle || 0;
   
-  const total = stats.total || 1;
-  const contactados = stats.contactados || 0;
-  const calificados = stats.calificados || 0;
+  // --- AGREGAMOS EL FILTRO POR CAMPAÑA EN EL DASHBOARD ---
+  const dashSelector = document.getElementById("f-campana-dashboard");
+  if (dashSelector) {
+    const currentVal = dashSelector.value;
+    const campanas = [...new Set(localData.map(r => r["Campaña Actual"]).filter(Boolean))].sort();
+    dashSelector.innerHTML = `<option value="">[Toda la base de Drive]</option>` + 
+                             campanas.map(c => `<option value="${c}">${c}</option>`).join("");
+    dashSelector.value = currentVal; // Mantiene la selección si ya había una
+  }
+  
+  // Filtrar las estadísticas localmente si hay una campaña seleccionada en el Dashboard
+  let total = stats.total || 1;
+  let contactados = stats.contactados || 0;
+  let calificados = stats.calificados || 0;
+  
+  const selectedCamp = dashSelector ? dashSelector.value : "";
+  if (selectedCamp) {
+    const filteredLeads = localData.filter(r => r["Campaña Actual"] === selectedCamp);
+    total = filteredLeads.length || 1;
+    contactados = filteredLeads.filter(r => r["Contactación"] !== "—" && r["Contactación"] !== "" && !["contestador", "cliente no atiende", "abandonada por cliente", "canales saturados"].includes(r["Contactación"].toLowerCase())).length;
+    calificados = filteredLeads.filter(r => r["Calificación"] !== "—" && r["Calificación"] !== "" && !["descarte", "buzon"].includes(r["Calificación"].toLowerCase())).length;
+    
+    // Recalcular métricas visuales superiores para la campaña elegida
+    document.getElementById("m-total").textContent = total;
+    document.getElementById("m-contactados").textContent = contactados;
+    document.getElementById("m-contactados-pct").textContent = Math.round(contactados/total*100) + "% de esta campaña";
+    document.getElementById("m-calificados").textContent = calificados;
+    document.getElementById("m-calificados-pct").textContent = Math.round(calificados/total*100) + "% calificados";
+    document.getElementById("m-bucle").textContent = filteredLeads.filter(r => parseInt(r["Intentos"]||0) >= 3 && (r["Contactación"].toLowerCase().includes("no atiende") || r["Contactación"] === "—" || r["Contactación"].toLowerCase().includes("abandonada") || r["Contactación"].toLowerCase().includes("contestador"))).length;
+  }
   
   const pctContactados = Math.round((contactados / total) * 100);
   const pctCalificados = Math.round((calificados / total) * 100);
@@ -695,10 +722,26 @@ function updateDashboard(stats) {
     </div>
   `;
 
-  renderBars("chart-contactacion", stats.contactMap, ["fill-teal","fill-blue","fill-amber","fill-gray","fill-red"]);
-  renderBars("chart-calificacion", stats.calMap, ["fill-amber","fill-red","fill-green"]);
-  renderBars("chart-carreras", stats.carreraMap, Array(10).fill("fill-blue"));
-  renderBars("chart-descartes", stats.descarteMap, Array(5).fill("fill-red"));
+  // Adaptar gráficos de barras al filtro
+  let currentContactMap = stats.contactMap;
+  let currentCalMap = stats.calMap;
+  let currentCarreraMap = stats.carreraMap;
+  let currentDescarteMap = stats.descarteMap;
+
+  if (selectedCamp) {
+    currentContactMap = {}; currentCalMap = {}; currentCarreraMap = {}; currentDescarteMap = {};
+    localData.filter(r => r["Campaña Actual"] === selectedCamp).forEach(r => {
+      if (r["Contactación"] && r["Contactación"] !== "—") currentContactMap[r["Contactación"]] = (currentContactMap[r["Contactación"]] || 0) + 1;
+      if (r["Calificación"] && r["Calificación"] !== "—") currentCalMap[r["Calificación"]] = (currentCalMap[r["Calificación"]] || 0) + 1;
+      if (r["Carrera"]) currentCarreraMap[r["Carrera"]] = (currentCarreraMap[r["Carrera"]] || 0) + 1;
+      if (r["Motivos de Descarte"] && r["Motivos de Descarte"] !== "—") currentDescarteMap[r["Motivos de Descarte"]] = (currentDescarteMap[r["Motivos de Descarte"]] || 0) + 1;
+    });
+  }
+
+  renderBars("chart-contactacion", currentContactMap, ["fill-teal","fill-blue","fill-amber","fill-gray","fill-red"]);
+  renderBars("chart-calificacion", currentCalMap, ["fill-amber","fill-red","fill-green"]);
+  renderBars("chart-carreras", currentCarreraMap, Array(10).fill("fill-blue"));
+  renderBars("chart-descartes", currentDescarteMap, Array(5).fill("fill-red"));
 }
 
 function renderBars(containerId, map, fills) {
