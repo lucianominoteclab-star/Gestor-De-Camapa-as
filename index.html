@@ -153,6 +153,22 @@ tr:last-child td { border-bottom: none; }
 tr:hover td { background: var(--bg-secondary); }
 
 /* Filtros campaña */
+  <div class="content">
+      <div id="page-dashboard" class="page active">
+        
+        <div class="card" style="margin-bottom: 1.25rem; padding: 0.75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+          <span style="font-size: 13px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em;">🎯 Auditar Campaña Específica:</span>
+          <select id="f-campana-dashboard" onchange="refreshDashboardFilters()" style="font-size: 13px; padding: 5px 12px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--bg-secondary); color: var(--text); min-width: 260px;">
+            <option value="">[Toda la base de Drive]</option>
+          </select>
+        </div>
+
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="metric-label">Total leads</div>
+            <div class="metric-value" id="m-total">—</div>
+            <div class="metric-sub">en base histórica</div>
+          </div>
 .filter-card { background: var(--bg-surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
 .filter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.875rem; }
 .filter-group { display: flex; flex-direction: column; gap: 4px; }
@@ -830,6 +846,38 @@ function toast(msg, type="") {
   wrap.appendChild(el);
   setTimeout(() => el.remove(), 3500);
 }
+  function renderHistory() {
+  const list = document.getElementById("history-list");
+  if (!campaignHistory.length) return;
+  list.innerHTML = campaignHistory.map(h => `<div class="history-item"><div class="history-icon"><i class="ti ti-file-export"></i></div><div class="history-info"><h4>${h.name}</h4><p>${h.leads} leads · ${h.carrera} · Cal: ${h.cal}</p></div></div>`).join("");
+}
+
+function toast(msg, type="") {
+  const wrap = document.getElementById("toast-wrap");
+  const el = document.createElement("div");
+  el.className = "toast" + (type ? " " + type : "");
+  el.innerHTML = `<i class="ti ti-${type==="error"?"alert-circle":"circle-check"}"></i> ${msg}`;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// PEGALO ACÁ, JUSTO ANTES DE TERMINAR EL SCRIPT
+function refreshDashboardFilters() {
+  if(localData.length) {
+    toast("Filtrando dashboard...", "success");
+    // Forzamos al sistema a repintar el dashboard con los datos locales filtrados
+    const lastMeta = document.getElementById("db-info").textContent;
+    // Esto vuelve a ejecutar la lógica visual
+    if(window.lastStatsCache) {
+      updateDashboard(window.lastStatsCache);
+    } else {
+      refreshData();
+    }
+  }
+}
+</script>
+</body>
+</html>
 </script>
 </body>
 </html>
