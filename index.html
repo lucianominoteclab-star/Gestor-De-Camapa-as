@@ -235,7 +235,22 @@ tr:hover td { background: var(--bg-secondary); }
         </button>
       </div>
     </div>
+<div class="content">
+      <div id="page-dashboard" class="page active">
+        
+        <div class="card" style="margin-bottom: 1.25rem; padding: 0.75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+          <span style="font-size: 13px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em;">🎯 Auditar Campaña Específica:</span>
+          <select id="f-campana-dashboard" onchange="refreshDashboardFilters()" style="font-size: 13px; padding: 5px 12px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--bg-secondary); color: var(--text); min-width: 260px;">
+            <option value="">[Toda la base de Drive]</option>
+          </select>
+        </div>
 
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="metric-label">Total leads</div>
+            <div class="metric-value" id="m-total">—</div>
+            <div class="metric-sub">en base histórica</div>
+          </div>
     <div class="content">
       <div id="page-dashboard" class="page active">
         <div class="metric-grid">
