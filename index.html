@@ -143,15 +143,15 @@ nav { padding: 0.5rem 0; flex: 1; }
 .badge-blue   { background: var(--blue-bg);   color: var(--blue-text); }
 .badge-gray   { background: var(--bg-secondary); color: var(--text-secondary); }
 
-/* Tabla */
-/* Tabla con scroll interno fijo para que no desborde la pantalla */
+/* TABLA FIX ESTILOS CORREGIDOS */
 .table-wrap { 
   background: var(--bg-surface); 
   border: 0.5px solid var(--border); 
   border-radius: var(--radius-lg); 
   display: flex;
   flex-direction: column;
-  max-height: 400px; /* Evita que crezca infinitamente hacia abajo */
+  max-height: 380px; 
+  overflow: hidden;
 }
 
 .table-header { 
@@ -160,37 +160,43 @@ nav { padding: 0.5rem 0; flex: 1; }
   align-items: center; 
   justify-content: space-between; 
   border-bottom: 0.5px solid var(--border); 
-  flex-shrink: 0; /* Mantiene la cabecera siempre arriba */
+  flex-shrink: 0;
 }
 
-/* Contenedor interno exclusivo para el scroll de los datos */
-/* Tabla con scroll interno fijo para que no desborde la pantalla */
-.table-wrap { 
-  background: var(--bg-surface); 
-  border: 0.5px solid var(--border); 
-  border-radius: var(--radius-lg); 
-  display: flex;
-  flex-direction: column;
-  max-height: 400px; /* Evita que crezca infinitamente hacia abajo */
-}
-
-.table-header { 
-  padding: 0.75rem 1.25rem; 
-  display: flex; 
-  align-items: center; 
-  justify-content: space-between; 
-  border-bottom: 0.5px solid var(--border); 
-  flex-shrink: 0; /* Mantiene la cabecera siempre arriba */
-}
-
-/* Contenedor interno exclusivo para el scroll de los datos */
 .table-responsive-container {
   overflow-y: auto;
   overflow-x: auto;
   flex-grow: 1;
+  width: 100%;
 }
 
-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  font-size: 12px; 
+  table-layout: fixed; /* Evita que las celdas se agranden solas */
+}
+
+th, td { 
+  padding: 8px 12px; 
+  text-align: left; 
+  border-bottom: 0.5px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Pone puntos suspensivos al texto largo */
+}
+
+th { 
+  background: var(--bg-secondary); 
+  color: var(--text-secondary); 
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Ancho controlado para columna campaña larga */
+.col-campana { width: 220px; max-width: 220px; }
 
 /* Filtros campaña */
 .filter-card { background: var(--bg-surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
@@ -220,7 +226,7 @@ table { width: 100%; border-collapse: collapse; font-size: 12px; }
 <div class="app">
   <div class="sidebar">
     <div class="sidebar-header">
-      <h1>Campaign Manager</h1>
+      <h1>GESTOR DE CAMPAÑAS -CENEDUDES-</h1>
       <p style="margin-top:6px;">
         <span class="conn-dot" id="conn-dot"></span>
         <span id="conn-label">Sin conectar</span>
@@ -377,7 +383,9 @@ table { width: 100%; border-collapse: collapse; font-size: 12px; }
               <h3>Vista previa en tiempo real</h3>
               <span id="preview-badge" class="badge badge-gray">—</span>
             </div>
-            <table id="preview-table"></table>
+            <div class="table-responsive-container">
+              <table id="preview-table"></table>
+            </div>
           </div>
         </div>
       </div>
@@ -450,7 +458,7 @@ table { width: 100%; border-collapse: collapse; font-size: 12px; }
             <h3>Leads filtrados</h3>
             <span id="filtered-badge" class="badge badge-green">0 leads</span>
           </div>
-          <div id="campaign-table">
+          <div class="table-responsive-container" id="campaign-table">
             <div class="empty"><i class="ti ti-filter"></i><p>Cargá una base y aplicá filtros</p></div>
           </div>
         </div>
@@ -541,7 +549,7 @@ async function refreshData() {
   try {
     const res = await apiFetch("getStats");
     if (res.error) return;
-    window.lastStatsCache = res; // Guardamos caché de las estadísticas globales
+    window.lastStatsCache = res; 
     updateDashboard(res);
     document.getElementById("db-info").textContent = res.total + " leads en Drive";
     
@@ -675,11 +683,19 @@ function handleDescartes(input) {
 
 function renderPreview(data) {
   if (!data || !data.length) return;
-  const previewRows = data.slice(0, 8);
+  const previewRows = data.slice(0, 15);
   document.getElementById("preview-badge").textContent = data.length + " registros";
 
   document.getElementById("preview-table").innerHTML =
-    `<thead>
+    `<colgroup>
+      <col class="col-campana">
+      <col style="width: 130px;">
+      <col style="width: 100px;">
+      <col style="width: 100px;">
+      <col style="width: 120px;">
+      <col style="width: 70px;">
+    </colgroup>
+    <thead>
       <tr>
         <th>Campaña Actual</th>
         <th>Nombre</th>
@@ -691,8 +707,8 @@ function renderPreview(data) {
     </thead>
     <tbody>` +
     previewRows.map(r => `<tr>
-        <td style="color:var(--text-secondary); font-weight:500;">${r["Campaña Actual"] || "—"}</td>
-        <td>${r["Nombre"] || "—"}</td>
+        <td title="${r["Campaña Actual"] || "—"}" style="color:var(--text-secondary); font-weight:500;">${r["Campaña Actual"] || "—"}</td>
+        <td title="${r["Nombre"] || "—"}">${r["Nombre"] || "—"}</td>
         <td>${r["numero_de_telefono"] || "—"}</td>
         <td><span class="badge ${r["Calificación"] !== '—' && r["Calificación"] !== '' ? 'badge-amber' : 'badge-gray'}">${r["Calificación"]}</span></td>
         <td><span class="badge ${r["Contactación"] !== '—' && r["Contactación"] !== '' ? 'badge-blue' : 'badge-gray'}">${r["Contactación"]}</span></td>
@@ -708,7 +724,6 @@ function updateDashboard(stats) {
   document.getElementById("m-calificados-pct").textContent = stats.total ? Math.round(stats.calificados/stats.total*100) + "% calificados" : "—";
   document.getElementById("m-bucle").textContent = stats.leadsEnBucle || 0;
   
-  // --- FILTRO POR CAMPAÑA EN EL DASHBOARD ---
   const dashSelector = document.getElementById("f-campana-dashboard");
   if (dashSelector) {
     const currentVal = dashSelector.value;
@@ -839,8 +854,37 @@ function applyFilters() {
   const ct = document.getElementById("campaign-table");
   if (!filtered.length) { ct.innerHTML = `<div class="empty"><i class="ti ti-mood-empty"></i><p>Ningún lead encontrado</p></div>`; return; }
   
-  ct.innerHTML = `<table><thead><tr><th>Campaña Origen</th><th>Nombre</th><th>Carrera</th><th>Teléfono</th><th>Calificación</th><th>Contactación</th><th>Intentos</th></tr></thead><tbody>` +
-    filtered.slice(0, 50).map(r=>`<tr><td>${r["Campaña Actual"]}</td><td>${r["Nombre"]}</td><td>${r["Carrera"]}</td><td>${r["numero_de_telefono"]}</td><td><span class="badge badge-amber">${r["Calificación"]}</span></td><td><span class="badge badge-blue">${r["Contactación"]}</span></td><td>${r["Intentos"]}</td></tr>`).join("") +
+  ct.innerHTML = `<table>
+    <colgroup>
+      <col class="col-campana">
+      <col style="width: 120px;">
+      <col style="width: 140px;">
+      <col style="width: 100px;">
+      <col style="width: 100px;">
+      <col style="width: 120px;">
+      <col style="width: 70px;">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>Campaña Origen</th>
+        <th>Nombre</th>
+        <th>Carrera</th>
+        <th>Teléfono</th>
+        <th>Calificación</th>
+        <th>Contactación</th>
+        <th>Intentos</th>
+      </tr>
+    </thead>
+    <tbody>` +
+    filtered.slice(0, 50).map(r=>`<tr>
+      <td title="${r["Campaña Actual"]}">${r["Campaña Actual"]}</td>
+      <td title="${r["Nombre"]}">${r["Nombre"]}</td>
+      <td title="${r["Carrera"]}">${r["Carrera"]}</td>
+      <td>${r["numero_de_telefono"]}</td>
+      <td><span class="badge badge-amber">${r["Calificación"]}</span></td>
+      <td><span class="badge badge-blue">${r["Contactación"]}</span></td>
+      <td>${r["Intentos"]}</td>
+    </tr>`).join("") +
     `</tbody></table>`;
 }
 
