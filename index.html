@@ -106,6 +106,7 @@ nav { padding: 0.5rem 0; flex: 1; }
 .bar-label { font-size: 12px; color: var(--text-secondary); width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
 .bar-track { flex: 1; background: var(--bg-secondary); border-radius: 3px; height: 5px; }
 .bar-fill { height: 5px; border-radius: 3px; transition: width 0.4s ease; }
+.bar-row .fill-gray { background: #888780; }
 .bar-count { font-size: 11px; color: var(--text-tertiary); min-width: 28px; text-align: right; }
 .fill-green  { background: #1D9E75; }
 .fill-amber  { background: #EF9F27; }
@@ -153,22 +154,6 @@ tr:last-child td { border-bottom: none; }
 tr:hover td { background: var(--bg-secondary); }
 
 /* Filtros campaña */
-  <div class="content">
-      <div id="page-dashboard" class="page active">
-        
-        <div class="card" style="margin-bottom: 1.25rem; padding: 0.75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 15px;">
-          <span style="font-size: 13px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em;">🎯 Auditar Campaña Específica:</span>
-          <select id="f-campana-dashboard" onchange="refreshDashboardFilters()" style="font-size: 13px; padding: 5px 12px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--bg-secondary); color: var(--text); min-width: 260px;">
-            <option value="">[Toda la base de Drive]</option>
-          </select>
-        </div>
-
-        <div class="metric-grid">
-          <div class="metric-card">
-            <div class="metric-label">Total leads</div>
-            <div class="metric-value" id="m-total">—</div>
-            <div class="metric-sub">en base histórica</div>
-          </div>
 .filter-card { background: var(--bg-surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
 .filter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.875rem; }
 .filter-group { display: flex; flex-direction: column; gap: 4px; }
@@ -235,9 +220,12 @@ tr:hover td { background: var(--bg-secondary); }
         </button>
       </div>
     </div>
-<div class="content">
+
+    <div class="content">
+      <!-- DASHBOARD -->
       <div id="page-dashboard" class="page active">
         
+        <!-- Filtro Campaña Dashboard -->
         <div class="card" style="margin-bottom: 1.25rem; padding: 0.75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 15px;">
           <span style="font-size: 13px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em;">🎯 Auditar Campaña Específica:</span>
           <select id="f-campana-dashboard" onchange="refreshDashboardFilters()" style="font-size: 13px; padding: 5px 12px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--bg-secondary); color: var(--text); min-width: 260px;">
@@ -245,14 +233,6 @@ tr:hover td { background: var(--bg-secondary); }
           </select>
         </div>
 
-        <div class="metric-grid">
-          <div class="metric-card">
-            <div class="metric-label">Total leads</div>
-            <div class="metric-value" id="m-total">—</div>
-            <div class="metric-sub">en base histórica</div>
-          </div>
-    <div class="content">
-      <div id="page-dashboard" class="page active">
         <div class="metric-grid">
           <div class="metric-card">
             <div class="metric-label">Total leads</div>
@@ -303,6 +283,7 @@ tr:hover td { background: var(--bg-secondary); }
         </div>
       </div>
 
+      <!-- CARGAR DATOS -->
       <div id="page-datos" class="page">
         <div class="upload-grid">
           <div class="card">
@@ -362,6 +343,7 @@ tr:hover td { background: var(--bg-secondary); }
         </div>
       </div>
 
+      <!-- ARMAR CAMPAÑA -->
       <div id="page-campana" class="page">
         <div class="filter-card">
           <div class="filter-grid">
@@ -435,6 +417,7 @@ tr:hover td { background: var(--bg-secondary); }
         </div>
       </div>
 
+      <!-- HISTORIAL -->
       <div id="page-historial" class="page">
         <div id="history-list">
           <div class="empty"><i class="ti ti-clock"></i><p>Las campañas exportadas aparecerán acá</p></div>
@@ -519,6 +502,7 @@ async function refreshData() {
   try {
     const res = await apiFetch("getStats");
     if (res.error) return;
+    window.lastStatsCache = res; // Guardamos caché de las estadísticas globales
     updateDashboard(res);
     document.getElementById("db-info").textContent = res.total + " leads en Drive";
     
@@ -551,10 +535,6 @@ function parseCSV(text) {
     headers.forEach((h,i) => obj[h] = vals[i] || "");
     return obj;
   });
-}
-
-function normalizePhone(p) {
-  return String(p||"").replace(/\D/g,"").slice(-10);
 }
 
 function handleBase(input) {
@@ -689,17 +669,16 @@ function updateDashboard(stats) {
   document.getElementById("m-calificados-pct").textContent = stats.total ? Math.round(stats.calificados/stats.total*100) + "% calificados" : "—";
   document.getElementById("m-bucle").textContent = stats.leadsEnBucle || 0;
   
-  // --- AGREGAMOS EL FILTRO POR CAMPAÑA EN EL DASHBOARD ---
+  // --- FILTRO POR CAMPAÑA EN EL DASHBOARD ---
   const dashSelector = document.getElementById("f-campana-dashboard");
   if (dashSelector) {
     const currentVal = dashSelector.value;
     const campanas = [...new Set(localData.map(r => r["Campaña Actual"]).filter(Boolean))].sort();
     dashSelector.innerHTML = `<option value="">[Toda la base de Drive]</option>` + 
                              campanas.map(c => `<option value="${c}">${c}</option>`).join("");
-    dashSelector.value = currentVal; // Mantiene la selección si ya había una
+    dashSelector.value = currentVal;
   }
   
-  // Filtrar las estadísticas localmente si hay una campaña seleccionada en el Dashboard
   let total = stats.total || 1;
   let contactados = stats.contactados || 0;
   let calificados = stats.calificados || 0;
@@ -711,7 +690,6 @@ function updateDashboard(stats) {
     contactados = filteredLeads.filter(r => r["Contactación"] !== "—" && r["Contactación"] !== "" && !["contestador", "cliente no atiende", "abandonada por cliente", "canales saturados"].includes(r["Contactación"].toLowerCase())).length;
     calificados = filteredLeads.filter(r => r["Calificación"] !== "—" && r["Calificación"] !== "" && !["descarte", "buzon"].includes(r["Calificación"].toLowerCase())).length;
     
-    // Recalcular métricas visuales superiores para la campaña elegida
     document.getElementById("m-total").textContent = total;
     document.getElementById("m-contactados").textContent = contactados;
     document.getElementById("m-contactados-pct").textContent = Math.round(contactados/total*100) + "% de esta campaña";
@@ -753,7 +731,6 @@ function updateDashboard(stats) {
     </div>
   `;
 
-  // Adaptar gráficos de barras al filtro
   let currentContactMap = stats.contactMap;
   let currentCalMap = stats.calMap;
   let currentCarreraMap = stats.carreraMap;
@@ -861,28 +838,10 @@ function toast(msg, type="") {
   wrap.appendChild(el);
   setTimeout(() => el.remove(), 3500);
 }
-  function renderHistory() {
-  const list = document.getElementById("history-list");
-  if (!campaignHistory.length) return;
-  list.innerHTML = campaignHistory.map(h => `<div class="history-item"><div class="history-icon"><i class="ti ti-file-export"></i></div><div class="history-info"><h4>${h.name}</h4><p>${h.leads} leads · ${h.carrera} · Cal: ${h.cal}</p></div></div>`).join("");
-}
 
-function toast(msg, type="") {
-  const wrap = document.getElementById("toast-wrap");
-  const el = document.createElement("div");
-  el.className = "toast" + (type ? " " + type : "");
-  el.innerHTML = `<i class="ti ti-${type==="error"?"alert-circle":"circle-check"}"></i> ${msg}`;
-  wrap.appendChild(el);
-  setTimeout(() => el.remove(), 3500);
-}
-
-// PEGALO ACÁ, JUSTO ANTES DE TERMINAR EL SCRIPT
 function refreshDashboardFilters() {
   if(localData.length) {
     toast("Filtrando dashboard...", "success");
-    // Forzamos al sistema a repintar el dashboard con los datos locales filtrados
-    const lastMeta = document.getElementById("db-info").textContent;
-    // Esto vuelve a ejecutar la lógica visual
     if(window.lastStatsCache) {
       updateDashboard(window.lastStatsCache);
     } else {
@@ -890,9 +849,6 @@ function refreshDashboardFilters() {
     }
   }
 }
-</script>
-</body>
-</html>
 </script>
 </body>
 </html>
