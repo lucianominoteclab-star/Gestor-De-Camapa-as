@@ -87,16 +87,27 @@ nav { padding: 0.5rem 0; flex: 1; }
 .btn-primary:hover { background: var(--green-text); border-color: var(--green-text); }
 .btn i { font-size: 15px; }
 .btn-sm { padding: 4px 9px; font-size: 12px; }
+.btn-danger { background: var(--red); color: white; border-color: var(--red); }
+
+/* Dashboard Filter Bar */
+.db-filter-bar { background: var(--bg-surface); border: 0.5px solid var(--border); padding: 8px 12px; border-radius: var(--radius); margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
+.db-filter-bar label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+.db-filter-bar select { font-size: 13px; padding: 4px 8px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--bg-secondary); color: var(--text); }
 
 /* Métricas */
 .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.25rem; }
-.metric-card { background: var(--bg-secondary); border-radius: var(--radius); padding: 0.875rem 1rem; }
+.metric-card { background: var(--bg-secondary); border-radius: var(--radius); padding: 0.875rem 1rem; position: relative; }
 .metric-label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
 .metric-value { font-size: 26px; font-weight: 500; line-height: 1; }
 .metric-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
 .c-green { color: var(--green); }
 .c-amber { color: var(--amber); }
 .c-red { color: var(--red); }
+
+/* Multi-select styling native */
+.select-multiple-box { height: 75px; overflow-y: auto; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--bg-secondary); padding: 4px; }
+.select-multiple-box label { display: flex; align-items: center; gap: 6px; padding: 2px 4px; font-size: 12px; color: var(--text); text-transform: none; letter-spacing: normal; cursor: pointer; }
+.select-multiple-box label:hover { background: var(--border); }
 
 /* Charts */
 .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
@@ -173,6 +184,13 @@ tr:hover td { background: var(--bg-secondary); }
 .history-info { flex: 1; min-width: 0; }
 .history-info h4 { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
 .history-info p { font-size: 12px; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Modales Modificados */
+.modal-overlay { position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; z-index:2000; }
+.modal-card { background: var(--bg-surface); width: 620px; max-width:90%; border-radius: var(--radius-lg); border: 0.5px solid var(--border); display:flex; flex-direction:column; max-height:80vh; }
+.modal-header { padding: 1rem 1.25rem; border-bottom: 0.5px solid var(--border); display:flex; align-items:center; justify-content:between; }
+.modal-body { padding: 1.25rem; overflow-y:auto; flex:1; }
+.modal-footer { padding: 0.75rem 1.25rem; border-top: 0.5px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
 </style>
 </head>
 <body>
@@ -221,8 +239,15 @@ tr:hover td { background: var(--bg-secondary); }
     </div>
 
     <div class="content">
-      <!-- DASHBOARD -->
       <div id="page-dashboard" class="page active">
+        <div class="db-filter-bar">
+          <label for="db-campaign-select">🎯 Auditar Campaña:</label>
+          <select id="db-campaign-select" onchange="loadStatsForCampaign(this.value)">
+            <option value="">[Toda la base de Drive]</option>
+          </select>
+          <small style="color:var(--text-tertiary);">Filtra kpis y gráficos de rendimiento abajo</small>
+        </div>
+
         <div class="metric-grid">
           <div class="metric-card">
             <div class="metric-label">Total leads</div>
@@ -239,10 +264,10 @@ tr:hover td { background: var(--bg-secondary); }
             <div class="metric-value c-amber" id="m-calificados">—</div>
             <div class="metric-sub" id="m-calificados-pct">—</div>
           </div>
-          <div class="metric-card" style="border-left:3px solid var(--red);">
+          <div class="metric-card" style="border-left:3px solid var(--red); cursor:pointer;" onclick="openBucleModal()" title="Ver listado detallado para exclusión">
             <div class="metric-label">Leads en Bucle (+3 Int)</div>
             <div class="metric-value c-red" id="m-bucle">—</div>
-            <div class="metric-sub" style="color:var(--red-text); font-weight:500;">⚠️ Revisar o Pausar</div>
+            <div class="metric-sub" style="color:var(--red-text); font-weight:500; display:flex; align-items:center; gap:2px;">⚠️ Clic para Excluir</div>
           </div>
         </div>
 
@@ -273,7 +298,6 @@ tr:hover td { background: var(--bg-secondary); }
         </div>
       </div>
 
-      <!-- DATOS -->
       <div id="page-datos" class="page">
         <div class="upload-grid">
           <div class="card">
@@ -333,7 +357,6 @@ tr:hover td { background: var(--bg-secondary); }
         </div>
       </div>
 
-      <!-- CAMPAÑA -->
       <div id="page-campana" class="page">
         <div class="filter-card">
           <div class="filter-grid">
@@ -344,25 +367,23 @@ tr:hover td { background: var(--bg-secondary); }
               </select>
             </div>
             <div class="filter-group">
-              <label>Calificación</label>
-              <select id="f-calificacion" onchange="applyFilters()">
-                <option value="">Cualquier calificación</option>
-                <option value="__vacio__">Sin calificación</option>
-                <option value="DESCARTE">DESCARTE</option>
-                <option value="BUZON">BUZON</option>
-                <option value="AGENDADO PARA SEGUIMIENTO">AGENDADO PARA SEGUIMIENTO</option>
-              </select>
+              <label>Calificaciones (Múltiple)</label>
+              <div class="select-multiple-box" id="f-calificacion-multi">
+                <label><input type="checkbox" value="__vacio__" checked onchange="applyFilters()"> Sin calificación</label>
+                <label><input type="checkbox" value="DESCARTE" onchange="applyFilters()"> DESCARTE</label>
+                <label><input type="checkbox" value="BUZON" onchange="applyFilters()"> BUZON</label>
+                <label><input type="checkbox" value="AGENDADO PARA SEGUIMIENTO" checked onchange="applyFilters()"> AGENDADO SEGUIMIENTO</label>
+              </div>
             </div>
             <div class="filter-group">
-              <label>Contactación</label>
-              <select id="f-contactacion" onchange="applyFilters()">
-                <option value="">Cualquier contactación</option>
-                <option value="__vacio__">Sin contactación</option>
-                <option value="Contactado">Contactado</option>
-                <option value="Contestador">Contestador</option>
-                <option value="Cliente no atiende">Cliente no atiende</option>
-                <option value="Abandonada por cliente">Abandonada por cliente</option>
-              </select>
+              <label>Contactación (Múltiple)</label>
+              <div class="select-multiple-box" id="f-contactacion-multi">
+                <label><input type="checkbox" value="__vacio__" checked onchange="applyFilters()"> Sin contactación</label>
+                <label><input type="checkbox" value="Contactado" checked onchange="applyFilters()"> Contactado</label>
+                <label><input type="checkbox" value="Contestador" checked onchange="applyFilters()"> Contestador</label>
+                <label><input type="checkbox" value="Cliente no atiende" checked onchange="applyFilters()"> No atiende</label>
+                <label><input type="checkbox" value="Abandonada por cliente" checked onchange="applyFilters()"> Abandonada</label>
+              </div>
             </div>
           </div>
           <div class="filter-divider"></div>
@@ -378,12 +399,12 @@ tr:hover td { background: var(--bg-secondary); }
               </select>
             </div>
             <div class="filter-group">
-              <label>Nombre de la campaña</label>
+              <label>Nombre de la campaña destino</label>
               <input type="text" id="campaign-name" placeholder="Ej: LEADS PROG JUNIO 01">
             </div>
             <div class="filter-group" style="justify-content:flex-end;">
               <button class="btn btn-primary" onclick="exportCampaign()">
-                <i class="ti ti-download"></i> Exportar CSV
+                <i class="ti ti-download"></i> Exportar CSV e Indexar
               </button>
             </div>
           </div>
@@ -400,7 +421,6 @@ tr:hover td { background: var(--bg-secondary); }
         </div>
       </div>
 
-      <!-- HISTORIAL -->
       <div id="page-historial" class="page">
         <div id="history-list">
           <div class="empty"><i class="ti ti-clock"></i><p>Las campañas exportadas aparecerán acá</p></div>
@@ -410,10 +430,45 @@ tr:hover td { background: var(--bg-secondary); }
   </div>
 </div>
 
+<div class="modal-overlay" id="bucle-modal" onclick="if(event.target===this) closeBucleModal()">
+  <div class="modal-card">
+    <div class="modal-header" style="justify-content: space-between;">
+      <h3 style="display:flex; align-items:center; gap:8px; color:var(--red); font-size:15px;"><i class="ti ti-alert-triangle"></i> Diagnóstico de Leads en Bucle (+3 intentos fallidos)</h3>
+      <button class="btn btn-sm" onclick="closeBucleModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:12px; font-size:12px; color:var(--text-secondary);">
+        Alumnos saturados que no atienden o entra contestador de forma recurrente. Exportá esta lista para ingresarla como <strong>Base de exclusión</strong> en OmniLeads.
+      </p>
+      <div class="table-wrap" style="max-height: 250px; overflow-y:auto;">
+        <table style="width:100%;">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Teléfono</th>
+              <th>Intentos</th>
+              <th>Campaña Procedencia</th>
+            </tr>
+          </thead>
+          <tbody id="bucle-table-rows">
+            </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeBucleModal()">Cerrar</button>
+      <button class="btn btn-danger" onclick="exportExclusionList()">
+        <i class="ti ti-download"></i> Exportar CSV de Exclusión
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
 let localData = [];
+let cachedStats = null;
 let scriptUrl = localStorage.getItem("cm_script_url") || "";
 let campaignHistory = JSON.parse(localStorage.getItem("cm_history") || "[]");
 
@@ -467,8 +522,10 @@ function setConnStatus(state) {
   lbl.textContent = text;
 }
 
-async function apiFetch(action) {
-  return fetch(scriptUrl + "?action=" + action + "&t=" + Date.now(), { redirect: "follow" }).then(r => r.json());
+async function apiFetch(action, params = "") {
+  let url = scriptUrl + "?action=" + action + "&t=" + Date.now();
+  if (params) url += params;
+  return fetch(url, { redirect: "follow" }).then(r => r.json());
 }
 
 async function apiPost(body) {
@@ -483,11 +540,21 @@ async function apiPost(body) {
 async function refreshData() {
   if (!scriptUrl) return;
   try {
-    const res = await apiFetch("getStats");
-    if (res.error) return;
-    updateDashboard(res);
-    document.getElementById("db-info").textContent = res.total + " leads en Drive";
+    toast("Sincronizando Drive...");
+    const statsRes = await apiFetch("getStats");
+    if (!statsRes.error) {
+      updateDashboard(statsRes);
+      document.getElementById("db-info").textContent = statsRes.total + " leads en Drive";
+    }
     
+    // Cargar selector de campañas en Dashboard
+    const campListRes = await apiFetch("getCampaignsList");
+    if (campListRes.campaigns) {
+      const select = document.getElementById("db-campaign-select");
+      select.innerHTML = `<option value="">[Toda la base de Drive]</option>` + 
+        campListRes.campaigns.map(c => `<option value="${c}">${c}</option>`).join("");
+    }
+
     const baseRes = await apiFetch("getBase");
     if (baseRes.rows) {
       localData = baseRes.rows.map(r => {
@@ -495,12 +562,41 @@ async function refreshData() {
         r["Contactación"] = r["Contactación"] || "—";
         r["Intentos"] = r["Intentos"] !== undefined ? String(r["Intentos"]) : "0";
         r["Motivos de Descarte"] = r["Motivos de Descarte"] || "—";
+        r["Campaña Actual"] = r["Campaña Actual"] || "—";
         return r;
       });
       updateCarreraFilter();
+      updateDynamicMultiSelects();
       renderPreview(localData);
     }
   } catch(e) {
+    console.error(e);
+  }
+}
+
+// Actualiza dinámicamente las opciones de descarte y calificación en la vista de filtros
+function updateDynamicMultiSelects() {
+  const calificaciones = [...new Set(localData.map(r => r["Calificación"]).filter(Boolean))].filter(c => c !== "—");
+  const boxCal = document.getElementById("f-calificacion-multi");
+  // Mantener los por defecto estables, inyectar el resto
+  let htmlCal = `<label><input type="checkbox" value="__vacio__" checked onchange="applyFilters()"> Sin calificación</label>
+                 <label><input type="checkbox" value="DESCARTE" onchange="applyFilters()"> DESCARTE</label>
+                 <label><input type="checkbox" value="BUZON" onchange="applyFilters()"> BUZON</label>`;
+  calificaciones.forEach(c => {
+    if(!["descarte","buzon","—"].includes(c.toLowerCase())) {
+      htmlCal += `<label><input type="checkbox" value="${c}" checked onchange="applyFilters()"> ${c}</label>`;
+    }
+  });
+  boxCal.innerHTML = htmlCal;
+}
+
+async function loadStatsForCampaign(campName) {
+  if (!scriptUrl) return;
+  try {
+    const params = campName ? "&campaign=" + encodeURIComponent(campName) : "";
+    const stats = await apiFetch("getStats", params);
+    updateDashboard(stats);
+  } catch (e) {
     console.error(e);
   }
 }
@@ -516,10 +612,6 @@ function parseCSV(text) {
     headers.forEach((h,i) => obj[h] = vals[i] || "");
     return obj;
   });
-}
-
-function normalizePhone(p) {
-  return String(p||"").replace(/\D/g,"").slice(-10);
 }
 
 function handleBase(input) {
@@ -546,7 +638,8 @@ function handleBase(input) {
         "Calificación": "—",
         "Contactación": "—",
         "Intentos": "0",
-        "Motivos de Descarte": "—"
+        "Motivos de Descarte": "—",
+        "Campaña Actual": "—"
       };
     });
     
@@ -555,12 +648,10 @@ function handleBase(input) {
     document.getElementById("base-rows").textContent = localData.length + " filas";
     
     renderPreview(localData);
-    toast("Subiendo y cruzando base histórica...");
-    
     if (scriptUrl) {
       const res = await apiPost({ action: "uploadBase", rows: localData });
       if (res.ok) {
-        toast(`Base: +${res.added} nuevos | ✓ ${res.updated} actualizados`, "success");
+        toast(`Base cargada correctamente`, "success");
         setTimeout(refreshData, 1000);
       }
     }
@@ -575,16 +666,14 @@ function handleResults(input) {
   reader.onload = async e => {
     const rows = parseCSV(e.target.result);
     if (!rows.length) return;
-
     document.getElementById("results-pill").style.display = "flex";
     document.getElementById("results-fname").textContent = file.name;
     document.getElementById("results-rows").textContent = rows.length + " filas";
 
-    toast("Unificando e indexando OmniLeads...");
     if (scriptUrl) {
       const res = await apiPost({ action: "mergeResults", rows: rows });
       if (res && res.ok) {
-        toast("Resultados guardados en Drive ✓", "success");
+        toast("OmniLeads cruzado correctamente", "success");
         setTimeout(refreshData, 1000);
       }
     }
@@ -599,16 +688,14 @@ function handleDescartes(input) {
   reader.onload = async e => {
     const rows = parseCSV(e.target.result);
     if (!rows.length) return;
-
     document.getElementById("descartes-pill").style.display = "flex";
     document.getElementById("descartes-fname").textContent = file.name;
     document.getElementById("descartes-rows").textContent = rows.length + " filas";
 
-    toast("Cruzando motivos de descarte...");
     if (scriptUrl) {
       const res = await apiPost({ action: "mergeDescartes", rows: rows });
       if (res && res.ok) {
-        toast("Descartes guardados en Drive ✓", "success");
+        toast("Motivos de descarte unificados", "success");
         setTimeout(refreshData, 1000);
       }
     }
@@ -629,7 +716,7 @@ function renderPreview(data) {
         <th>Calificación</th>
         <th>Contactación</th>
         <th>Intentos</th>
-        <th>Motivo Descarte</th>
+        <th>Campaña Origen</th>
       </tr>
     </thead>
     <tbody>` +
@@ -639,7 +726,7 @@ function renderPreview(data) {
         <td><span class="badge ${r["Calificación"] !== '—' && r["Calificación"] !== '' ? 'badge-amber' : 'badge-gray'}">${r["Calificación"]}</span></td>
         <td><span class="badge ${r["Contactación"] !== '—' && r["Contactación"] !== '' ? 'badge-blue' : 'badge-gray'}">${r["Contactación"]}</span></td>
         <td>${r["Intentos"] || "0"}</td>
-        <td><span style="color:var(--red-text); font-weight:600;">${r["Motivos de Descarte"] || "—"}</span></td>
+        <td><span class="badge badge-gray">${r["Campaña Actual"] || "—"}</span></td>
       </tr>`).join("") + `</tbody>`;
 }
 
@@ -651,7 +738,6 @@ function updateDashboard(stats) {
   document.getElementById("m-calificados-pct").textContent = stats.total ? Math.round(stats.calificados/stats.total*100) + "% calificados" : "—";
   document.getElementById("m-bucle").textContent = stats.leadsEnBucle || 0;
   
-  // Render de Embudo Proporcional Histórico
   const total = stats.total || 1;
   const contactados = stats.contactados || 0;
   const calificados = stats.calificados || 0;
@@ -660,16 +746,16 @@ function updateDashboard(stats) {
   const pctCalificados = Math.round((calificados / total) * 100);
   
   document.getElementById("chart-funnel").innerHTML = `
-    <div style="margin-bottom: 4px;">
+    <div>
       <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
-        <span><strong>1. Base Cargada Total</strong></span>
+        <span><strong>1. Base Auditada</strong></span>
         <span>${total} (100%)</span>
       </div>
       <div style="background:var(--bg-secondary); border-radius:4px; height:18px; width:100%;">
         <div class="fill-blue" style="height:100%; border-radius:4px; width:100%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;">100%</div>
       </div>
     </div>
-    <div style="margin-bottom: 4px;">
+    <div style="margin-top:8px;">
       <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
         <span><strong>2. Contactación Efectiva</strong></span>
         <span>${contactados} (${pctContactados}%)</span>
@@ -678,9 +764,9 @@ function updateDashboard(stats) {
         <div class="fill-green" style="height:100%; border-radius:4px; width:${pctContactados}%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;">${pctContactados}%</div>
       </div>
     </div>
-    <div>
+    <div style="margin-top:8px;">
       <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
-        <span><strong>3. Alumnos Avanzados / Calificados</strong></span>
+        <span><strong>3. Alumnos Calificados</strong></span>
         <span>${calificados} (${pctCalificados}%)</span>
       </div>
       <div style="background:var(--bg-secondary); border-radius:4px; height:18px; width:100%;">
@@ -716,18 +802,30 @@ function updateCarreraFilter() {
   document.getElementById("f-carrera").innerHTML = `<option value="">Todas las carreras</option>` + carreras.map(c=>`<option value="${c}">${c}</option>`).join("");
 }
 
+// LOGICA MULTISELECT FILTRADO DE CAMPAÑA
 function getFiltered() {
   const car = document.getElementById("f-carrera").value;
-  const cal = document.getElementById("f-calificacion").value;
-  const con = document.getElementById("f-contactacion").value;
-  const att = document.getElementById("f-intentos").value;
+  const intentMax = document.getElementById("f-intentos").value;
+
+  // Obtener seleccionados del contenedor múltiple de calificaciones
+  const selectedCals = Array.from(document.querySelectorAll("#f-calificacion-multi input:checked")).map(el => el.value);
+  // Obtener seleccionados del contenedor múltiple de contactación
+  const selectedCons = Array.from(document.querySelectorAll("#f-contactacion-multi input:checked")).map(el => el.value);
+
   return localData.filter(r => {
     if (car && r["Carrera"] !== car) return false;
-    if (cal === "__vacio__" && r["Calificación"] !== "—" && r["Calificación"] !== "") return false;
-    if (cal && cal !== "__vacio__" && r["Calificación"] !== cal) return false;
-    if (con === "__vacio__" && r["Contactación"] !== "—" && r["Contactación"] !== "") return false;
-    if (con && con !== "__vacio__" && r["Contactación"] !== con) return false;
-    if (att !== "" && parseInt(r["Intentos"]||"0") > parseInt(att)) return false;
+    
+    // Filtro Carrera
+    let rCal = r["Calificación"] === "—" || r["Calificación"] === "" ? "__vacio__" : r["Calificación"];
+    if (selectedCals.length > 0 && !selectedCals.includes(rCal)) return false;
+
+    // Filtro Contactación
+    let rCon = r["Contactación"] === "—" || r["Contactación"] === "" ? "__vacio__" : r["Contactación"];
+    if (selectedCons.length > 0 && !selectedCons.includes(rCon)) return false;
+
+    // Filtro Intentos
+    if (intentMax !== "" && parseInt(r["Intentos"]||"0") > parseInt(intentMax)) return false;
+    
     return true;
   });
 }
@@ -743,33 +841,88 @@ function applyFilters() {
     `</tbody></table>`;
 }
 
-function exportCampaign() {
+async function exportCampaign() {
   const filtered = getFiltered();
   if (!filtered.length) return;
   const name = document.getElementById("campaign-name").value.trim() || "CAMPAÑA_" + new Date().toISOString().slice(0,10);
+  
+  // Guardar archivo local descargable
   const csvCols = ["Nombre", "Correo", "numero_de_telefono", "Numero_de_telefono_de_WhatsApp", "Carrera"];
   const csv = [csvCols.join(","), ...filtered.map(r => csvCols.map(c=>`"${r[c]||""}"`).join(","))].join("\n");
-  
   const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = name.replace(/\s+/g,"_") + ".csv"; a.click();
   
-  const entry = { name, leads: filtered.length, carrera: document.getElementById("f-carrera").value||"Todas", cal: document.getElementById("f-calificacion").value||"—", con: document.getElementById("f-contactacion").value||"—", intentos: document.getElementById("f-intentos").value||"—", date: new Date().toLocaleDateString("es-AR") };
+  const entry = { name, leads: filtered.length, carrera: document.getElementById("f-carrera").value||"Todas", cal: "Personalizada (Multi)", con: "Personalizada (Multi)", intentos: document.getElementById("f-intentos").value||"—", date: new Date().toLocaleDateString("es-AR") };
   campaignHistory.unshift(entry);
   localStorage.setItem("cm_history", JSON.stringify(campaignHistory.slice(0, 50)));
   renderHistory();
-  if (scriptUrl) apiPost({ action:"logCampaign", entry });
+  
+  if (scriptUrl) {
+    toast("Indexando nombre de campaña en base Drive...");
+    await apiPost({ action:"logCampaign", entry });
+    const phonesToTag = filtered.map(r => r["numero_de_telefono"]);
+    await apiPost({ action:"tagLeadsWithCampaign", phones: phonesToTag, campaignName: name });
+    setTimeout(refreshData, 1000);
+  }
+}
+
+// LÓGICA DE EXCLUSIONES Y DIAGNÓSTICO DE BUCLES
+function getBucleLeads() {
+  return localData.filter(r => {
+    const intent = parseInt(r["Intentos"] || 0);
+    const con = String(r["Contactación"] || "—").toLowerCase();
+    return (intent >= 3 && (con.includes("no atiende") || con === "—" || con.includes("abandonada") || con.includes("contestador")));
+  });
+}
+
+function openBucleModal() {
+  const list = getBucleLeads();
+  const rowsContainer = document.getElementById("bucle-table-rows");
+  if(!list.length) {
+    rowsContainer.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">No hay leads en bucle críticos detectados 🎉</td></tr>`;
+  } else {
+    rowsContainer.innerHTML = list.map(r => `
+      <tr>
+        <td><strong>${r["Nombre"]}</strong></td>
+        <td>${r["numero_de_telefono"]}</td>
+        <td><span class="badge badge-red">${r["Intentos"]} Int.</span></td>
+        <td><span class="badge badge-gray">${r["Campaña Actual"] || "Sin campaña"}</span></td>
+      </tr>
+    `).join("");
+  }
+  document.getElementById("bucle-modal").style.display = "flex";
+}
+
+function closeBucleModal() {
+  document.getElementById("bucle-modal").style.display = "none";
+}
+
+function exportExclusionList() {
+  const list = getBucleLeads();
+  if (!list.length) { toast("No hay datos para exportar", "error"); return; }
+  
+  // Formato simple de OmniLeads para caja negra/exclusión (Teléfono)
+  const csvContent = ["numero_de_telefono", ...list.map(r => r["numero_de_telefono"])].join("\n");
+  const blob = new Blob([csvContent], { type:"text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "EXCLUSIONES_OMNILEADS_" + new Date().toISOString().slice(0,10) + ".csv";
+  a.click();
+  toast("CSV de exclusiones descargado", "success");
 }
 
 function renderHistory() {
   const list = document.getElementById("history-list");
   if (!campaignHistory.length) return;
-  list.innerHTML = campaignHistory.map(h => `<div class="history-item"><div class="history-icon"><i class="ti ti-file-export"></i></div><div class="history-info"><h4>${h.name}</h4><p>${h.leads} leads · ${h.carrera} · Cal: ${h.cal}</p></div></div>`).join("");
+  list.innerHTML = campaignHistory.map(h => `<div class="history-item"><div class="history-icon"><i class="ti ti-file-export"></i></div><div class="history-info"><h4>${h.name}</h4><p>${h.leads} leads · ${h.carrera}</p></div></div>`).join("");
 }
 
 function toast(msg, type="") {
   const wrap = document.getElementById("toast-wrap");
+  if(!wrap) return;
   const el = document.createElement("div");
   el.className = "toast" + (type ? " " + type : "");
   el.innerHTML = `<i class="ti ti-${type==="error"?"alert-circle":"circle-check"}"></i> ${msg}`;
