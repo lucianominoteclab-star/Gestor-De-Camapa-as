@@ -199,13 +199,61 @@ th {
 .col-campana { width: 220px; max-width: 220px; }
 
 /* Filtros campaña */
-.filter-card { background: var(--bg-surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
-.filter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.875rem; }
-.filter-group { display: flex; flex-direction: column; gap: 4px; }
-.filter-group label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
-.filter-group select, .filter-group input[type=text] { font-size: 13px; padding: 6px 8px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--bg-secondary); color: var(--text); font-family: inherit; }
-.filter-divider { height: 0.5px; background: var(--border); margin: 1rem 0; }
-.filter-actions { display: flex; align-items: center; justify-content: space-between; }
+/* Filtros campaña - Corregido y centrado */
+.filter-card { 
+  background: var(--bg-surface); 
+  border: 0.5px solid var(--border); 
+  border-radius: var(--radius-lg); 
+  padding: 1.25rem; 
+  margin-bottom: 1rem; 
+}
+
+/* Distribuimos mejor los espacios de las columnas */
+.filter-grid { 
+  display: grid; 
+  grid-template-columns: 0.8fr 1.2fr 1fr; /* Achica la 1ra columna y equilibra las demás */
+  gap: 1.25rem; 
+  align-items: flex-end; /* Alinea los elementos perfectamente de forma vertical */
+}
+
+.filter-group { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 6px; 
+  width: 100%;
+}
+
+.filter-group label { 
+  font-size: 11px; 
+  color: var(--text-tertiary); 
+  text-transform: uppercase; 
+  letter-spacing: 0.04em; 
+  font-weight: 500;
+}
+
+.filter-group select, .filter-group input[type=text] { 
+  font-size: 13px; 
+  padding: 7px 10px; 
+  border: 0.5px solid var(--border-md); 
+  border-radius: var(--radius); 
+  background: var(--bg-secondary); 
+  color: var(--text); 
+  font-family: inherit; 
+  width: 100%; 
+  height: 34px; /* Forzamos altura idéntica para selectores e inputs */
+}
+
+.filter-divider { 
+  height: 0.5px; 
+  background: var(--border); 
+  margin: 1.25rem 0; 
+}
+
+.filter-actions { 
+  display: flex; 
+  align-items: center; 
+  justify-content: flex-end; 
+}
 
 /* Empty state */
 .empty { text-align: center; padding: 3rem 1rem; color: var(--text-tertiary); }
